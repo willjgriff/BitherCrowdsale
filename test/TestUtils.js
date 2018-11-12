@@ -1,3 +1,4 @@
+const time = require("openzeppelin-solidity/test/helpers/time")
 
 async function increaseBlockTime (duration) {
     const id = Date.now();
@@ -22,6 +23,15 @@ async function increaseBlockTime (duration) {
     });
 }
 
+async function increaseBlockTimeTo (target) {
+    const now = (await time.latest());
+
+    if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
+    const diff = target - now;
+    return increaseBlockTime(diff);
+}
+
 module.exports = {
-    increaseBlockTime
+    increaseBlockTime,
+    increaseBlockTimeTo
 }
