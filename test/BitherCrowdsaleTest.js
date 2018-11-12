@@ -1,5 +1,7 @@
 const BitherCrowdsale = artifacts.require("BitherCrowdsale.sol")
 const BitherToken = artifacts.require("BitherToken.sol")
+const RentalProcessorToken = artifacts.require("RentalProcessorToken.sol")
+
 const BN = require("bn.js")
 const shouldFail = require("openzeppelin-solidity/test/helpers/shouldFail")
 const time = require("openzeppelin-solidity/test/helpers/time")
@@ -7,32 +9,27 @@ const testUtils = require("./TestUtils")
 
 contract("BitherCrowdsale", accounts => {
 
-    let bitherToken, bitherCrowdsale
+    let bitherToken, rentalProcessorToken, bitherCrowdsale
+
     let openingTime
     const etherBenefactor = accounts[5]
     const bitherTokenOwner = accounts[0]
     const decimals = '000000000000000000'
-    const crowdsaleTokens = new BN('6750000' + decimals) // 15% of total available * (10 ** 18) number of decimals in BTR token
+    const btrCowdsaleTokens = new BN('6750000' + decimals) // 15% of total available * (10 ** 18) number of decimals in BTR token
+    const brpCowdsaleTokens = new BN('75000000' + decimals) // 15% of total available * (10 ** 18) number of decimals in BRP token
 
+    // Specify opening time in constructor!
     beforeEach(async () => {
         bitherToken = await BitherToken.new({ from: bitherTokenOwner })
-        bitherCrowdsale = await BitherCrowdsale.new(bitherToken.address, bitherTokenOwner, etherBenefactor)
-        await bitherToken.approve(bitherCrowdsale.address, crowdsaleTokens, { from: bitherTokenOwner })
+        rentalProcessorToken = await RentalProcessorToken.new({ from: bitherTokenOwner })
+        bitherCrowdsale = await BitherCrowdsale.new(bitherToken.address, rentalProcessorToken.address, bitherTokenOwner, etherBenefactor)
         openingTime = await time.latest()
+
+        await bitherToken.approve(bitherCrowdsale.address, btrCowdsaleTokens, { from: bitherTokenOwner })
+        await rentalProcessorToken.approve(bitherCrowdsale.address, brpCowdsaleTokens, { from: bitherTokenOwner })
     })
 
-    describe("buyTokens(address beneficiary)", async () => {
-
-        it("purchases 110 tokens for 1 ether for account 1", async () => {
-            const tokenBenefactor = accounts[1]
-            const weiValue = web3.utils.toWei('1', 'ether')
-            const expectedTokenBalance = new BN('110' + decimals)
-
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: weiValue, from: tokenBenefactor })
-
-            const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
-            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
-        })
+    describe("buyTokens(address beneficiary) misc tests", async () => {
 
         it("deposits ether to etherBenefactor", async () => {
             const tokenBenefactor = accounts[1]
@@ -53,6 +50,20 @@ contract("BitherCrowdsale", accounts => {
             await testUtils.increaseBlockTimeTo(closingTime)
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor, { value: weiValue, from: tokenBenefactor }))
+        })
+    })
+
+    describe("buyTokens(address beneficiary) BTR token tests", async () => {
+
+        it("purchases 110 tokens for 1 ether for account 1 at start of sale", async () => {
+            const tokenBenefactor = accounts[1]
+            const weiValue = web3.utils.toWei('1', 'ether')
+            const expectedTokenBalance = new BN('110' + decimals)
+
+            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: weiValue, from: tokenBenefactor })
+
+            const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
+            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
         })
 
         it("purchases 109 tokens for 1 ether after 1st day", async () => {
@@ -94,6 +105,7 @@ contract("BitherCrowdsale", accounts => {
             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
         })
 
+        // SOMETIMES FAILS, WORK OUT WHY (probably because openingTime is set to a second after the actual opening time)
         it("purchases 108 tokens for 1 ether before the end of the 8th day", async () => {
             const tokenBenefactor = accounts[1]
             const weiValue = web3.utils.toWei('1', 'ether')
@@ -130,6 +142,20 @@ contract("BitherCrowdsale", accounts => {
             await bitherCrowdsale.buyTokens(tokenBenefactor, { value: weiValue, from: tokenBenefactor })
 
             const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
+            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
+        })
+    })
+
+    describe("buyTokens(address beneficiary) BRP token tests", async () => {
+
+        it("purchases 1400 tokens for 1 ether for account 1 at start of sale", async () => {
+            const tokenBenefactor = accounts[1]
+            const weiValue = web3.utils.toWei('1', 'ether')
+            const expectedTokenBalance = new BN('1400' + decimals)
+
+            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: weiValue, from: tokenBenefactor })
+
+            const actualTokenBalance = await rentalProcessorToken.balanceOf(tokenBenefactor)
             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
         })
     })
