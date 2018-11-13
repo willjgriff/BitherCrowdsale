@@ -23,6 +23,13 @@ async function increaseBlockTime (duration) {
     });
 }
 
+/**
+ * Beware that due to the need of calling two separate ganache methods and rpc calls overhead
+ * it's hard to increase time precisely to a target point so design your test to tolerate
+ * small fluctuations from time to time.
+ *
+ * @param target time in seconds
+ */
 async function increaseBlockTimeTo (target) {
     const now = (await time.latest());
 

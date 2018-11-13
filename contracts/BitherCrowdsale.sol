@@ -2,68 +2,104 @@ pragma solidity ^0.4.25;
 
 import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/emission/AllowanceCrowdsale.sol";
+import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
 
-contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale {
+/**
+ * @title BitherCrowdsale
+ * @dev BitherCrowdsale contract uses multiple openzeppelin base contracts and adds some custom behaviour.
+ *      Enables the purchasing of 2 tokens, the BitherToken (BTR) and BitherStockToken (BSK) at rates
+ *      determined by the current block time. It specifies a cap of Ether that can be contributed and a
+ *      length of time the crowdsale lasts. It requires the crowdsale contract address be given
+ *      an allowance of 33000000 BTR and 21000000 BSK enabling it to distribute the purchased tokens. These
+ *      values are determined by the cap of 300000 ETH and the phased distribution rates.
+ */
+contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale {
+
+    uint256 private capInWei = 300000 ether;
+    uint256 private crowdsaleLength = 13 days;
 
     uint256 private btrRateDay1 = 110;
-    uint256 private btrRateDay2to4 = 109;
-    uint256 private btrRateDay5to8 = 108;
-    uint256 private btrRateDay9to12 = 107;
+    uint256 private btrRateDay2to5 = 109;
+    uint256 private btrRateDay6to9 = 108;
+    uint256 private btrRateDay10to13 = 107;
 
-    uint256 private brpRateFirst2Hours = 1400;
-    uint256 private brpRateDay1 = 1360;
-    uint256 private brpRateDay2to4 = 1320;
-    uint256 private brpRateDay5to8 = 1280;
-    uint256 private brpRateDay9to12 = 1240;
+    uint256 private bskRateFirst2Hours = 70;
+    uint256 private bskRateDay1 = 68;
+    uint256 private bskRateDay2to5 = 66;
+    uint256 private bskRateDay6to9 = 64;
+    uint256 private bskRateDay10to13 = 62;
 
-    IERC20 private _rentalProcessorToken;
+    IERC20 private _bitherStockToken;
     event BitherProcessorTokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    constructor(IERC20 bitherToken, IERC20 rentalProcessorToken, address bitherTokensOwner, address etherBenefactor)
-        Crowdsale(110, etherBenefactor, bitherToken)
+    /**
+     * @dev Constructor, calls the inherited classes constructors and stores the BitherStockToken
+     * @param bitherToken The BitherToken address, must be an ERC20 contract
+     * @param bitherStockToken The BitherStockToken, must be an ERC20 contract
+     * @param bitherTokensOwner Address holding the tokens, which has approved allowance to the crowdsale
+     * @param etherBenefactor Address that will receive the deposited Ether
+     * @param openingTime The opening time, in seconds, the crowdsale will begin at
+     */
+    constructor(IERC20 bitherToken, IERC20 bitherStockToken, address bitherTokensOwner, address etherBenefactor, uint256 openingTime)
+        Crowdsale(btrRateDay1, etherBenefactor, bitherToken)
         AllowanceCrowdsale(bitherTokensOwner)
-        TimedCrowdsale(now, now + 12 days)
+        TimedCrowdsale(openingTime, openingTime + crowdsaleLength)
+        CappedCrowdsale(capInWei)
         public
     {
-        _rentalProcessorToken = rentalProcessorToken;
+        _bitherStockToken = bitherStockToken;
     }
 
-    // Overrides function in Crowdsale contract
+    /**
+     * @dev Overrides function in the Crowdsale contract to enable a custom phased distribution
+     * @param weiAmount Value in wei to be converted into tokens
+     * @return Number of tokens that can be purchased with the specified weiAmount
+     */
     function _getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
         if (now < openingTime() + 1 days) {
             return weiAmount.mul(btrRateDay1);
-        } else if (now < openingTime() + 4 days) {
-            return weiAmount.mul(btrRateDay2to4);
-        } else if (now < openingTime() + 8 days) {
-            return weiAmount.mul(btrRateDay5to8);
+        } else if (now < openingTime() + 5 days) {
+            return weiAmount.mul(btrRateDay2to5);
+        } else if (now < openingTime() + 9 days) {
+            return weiAmount.mul(btrRateDay6to9);
         } else if (now <= closingTime()) {
-            return weiAmount.mul(btrRateDay9to12);
+            return weiAmount.mul(btrRateDay10to13);
         }
     }
 
-    // Overrides function in Crowdsale contract
+    /**
+     * @dev Overrides function in AllowanceCrowdsale contract (therefore also overrides function
+     *      in Crowdsale contract) to add functionality for distribution of a second token.
+     * @param beneficiary Token purchaser
+     * @param tokenAmount Amount of tokens purchased
+     */
     function _deliverTokens(address beneficiary, uint256 tokenAmount) internal {
         super._deliverTokens(beneficiary, tokenAmount);
 
         uint256 weiAmount = msg.value;
-        uint256 brpTokenAmount = getBrpTokenAmount(weiAmount);
+        uint256 bskTokenAmount = getBskTokenAmount(weiAmount);
 
-        _rentalProcessorToken.safeTransferFrom(tokenWallet(), beneficiary, brpTokenAmount);
+        _bitherStockToken.safeTransferFrom(tokenWallet(), beneficiary, bskTokenAmount);
 
-        emit BitherProcessorTokensPurchased(msg.sender, beneficiary, weiAmount, brpTokenAmount);
+        emit BitherProcessorTokensPurchased(msg.sender, beneficiary, weiAmount, bskTokenAmount);
     }
 
-    function getBrpTokenAmount(uint256 weiAmount) private view returns (uint256) {
+    /**
+     * @dev Determines distribution of BSK depending on the time of the transaction
+     * @param weiAmount Value in wei to be converted into tokens
+     * @return Number of tokens that can be purchased with the specified weiAmount
+     */
+    function getBskTokenAmount(uint256 weiAmount) private view returns (uint256) {
         if (now < openingTime() + 2 hours) {
-            return weiAmount.mul(brpRateFirst2Hours);
+            return weiAmount.mul(bskRateFirst2Hours);
         } else if (now < openingTime() + 1 days) {
-            return weiAmount.mul(brpRateDay1);
+            return weiAmount.mul(bskRateDay1);
         } else if (now < openingTime() + 4 days) {
-            return weiAmount.mul(brpRateDay2to4);
+            return weiAmount.mul(bskRateDay2to5);
         } else if (now < openingTime() + 8 days) {
-            return weiAmount.mul(brpRateDay5to8);
+            return weiAmount.mul(bskRateDay6to9);
         } else if (now <= closingTime()) {
-            return weiAmount.mul(brpRateDay9to12);
+            return weiAmount.mul(bskRateDay10to13);
         }
     }
 }
