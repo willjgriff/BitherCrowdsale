@@ -7,9 +7,11 @@ import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol
 /**
  * @title BitherCrowdsale
  * @dev BitherCrowdsale contract uses multiple openzeppelin base contracts and adds some custom behaviour.
- *      Enables the purchasing of 2 tokens, the BitherToken (BTR) and BitherStockToken (BSK) at rates
- *      determined by the current block time. It specifies a cap of Ether that can be contributed and a
- *      length of time the crowdsale lasts. It requires the crowdsale contract address be given
+ *      The openzeppelin base contracts have been audited and are widely used by the community. They can
+ *      be trusted to have almost zero security vulnerabilities and therefore do not need to be tested.
+ *      The BitherCrowdale enables the purchasing of 2 tokens, the BitherToken (BTR) and BitherStockToken
+ *      (BSK) at rates determined by the current block time. It specifies a cap of Ether that can be contributed
+ *      and a length of time the crowdsale lasts. It requires the crowdsale contract address be given
  *      an allowance of 33000000 BTR and 21000000 BSK enabling it to distribute the purchased tokens. These
  *      values are determined by the cap of 300000 ETH and the phased distribution rates.
  */
@@ -30,7 +32,7 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
     uint256 private bskRateDay10to13 = 62;
 
     IERC20 private _bitherStockToken;
-    event BitherProcessorTokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event BitherStockTokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
     /**
      * @dev Constructor, calls the inherited classes constructors and stores the BitherStockToken
@@ -81,7 +83,7 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
 
         _bitherStockToken.safeTransferFrom(tokenWallet(), beneficiary, bskTokenAmount);
 
-        emit BitherProcessorTokensPurchased(msg.sender, beneficiary, weiAmount, bskTokenAmount);
+        emit BitherStockTokensPurchased(msg.sender, beneficiary, weiAmount, bskTokenAmount);
     }
 
     /**
@@ -94,9 +96,9 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
             return weiAmount.mul(bskRateFirst2Hours);
         } else if (now < openingTime() + 1 days) {
             return weiAmount.mul(bskRateDay1);
-        } else if (now < openingTime() + 4 days) {
+        } else if (now < openingTime() + 5 days) {
             return weiAmount.mul(bskRateDay2to5);
-        } else if (now < openingTime() + 8 days) {
+        } else if (now < openingTime() + 9 days) {
             return weiAmount.mul(bskRateDay6to9);
         } else if (now <= closingTime()) {
             return weiAmount.mul(bskRateDay10to13);
