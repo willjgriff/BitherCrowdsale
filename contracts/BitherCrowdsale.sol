@@ -79,7 +79,7 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
 
     /**
      * @dev Overrides function in AllowanceCrowdsale contract (therefore also overrides function
-     *      in Crowdsale contract) to add functionality for distribution of a second token.
+     *      in Crowdsale contract) to add functionality for distribution of a second token, BSK.
      * @param beneficiary Token purchaser
      * @param tokenAmount Amount of tokens purchased
      */
