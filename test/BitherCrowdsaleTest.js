@@ -44,7 +44,28 @@ contract("BitherCrowdsale", accounts => {
         await bitherStockToken.approve(bitherCrowdsale.address, bskCowdsaleTokens, { from: bitherTokensOwner })
     }
 
+    describe("constructor()", async () => {
+
+        it("costs lass than 2000000 gas", async () => {
+            maxGasCost = 2000000
+            deploymentReceipt = await web3.eth.getTransactionReceipt(bitherCrowdsale.transactionHash)
+            deploymentCost = deploymentReceipt.gasUsed
+
+            assert.isBelow(deploymentCost, maxGasCost)
+        })
+    })
+
     describe("buyTokens(address beneficiary) misc tests", async () => {
+
+        it("costs less than 200000 gas", async () => {
+            const maxGasCost = 200000
+
+            transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+            const transactionGasCost = transaction.receipt.gasUsed
+
+            assert.isBelow(transactionGasCost, maxGasCost)
+        })
+
 
         it("deposits ether to etherBenefactor address", async () => {
             const etherBenefactorBalance = await web3.eth.getBalance(etherBenefactor)

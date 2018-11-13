@@ -32,6 +32,14 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
     uint256 private bskRateDay10to13 = 62;
 
     IERC20 private _bitherStockToken;
+
+    /**
+     * Event for BSK token purchase logging
+     * @param purchaser Who paid for the tokens
+     * @param beneficiary Who got the tokens
+     * @param value Wei paid for purchase
+     * @param amount Amount of tokens purchased
+     */
     event BitherStockTokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
     /**
