@@ -39,7 +39,7 @@ async function increaseBlockTimeTo (target) {
 }
 
 async function sleepUntil(timeStamp) {
-    console.log("Sleeping until " + timeStamp + "...")
+    // console.log("Sleeping until " + timeStamp + "...")
     while (currentEpoch() < timeStamp) {
         await sleep(1000)
     }
