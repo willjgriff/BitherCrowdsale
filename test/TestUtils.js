@@ -38,7 +38,23 @@ async function increaseBlockTimeTo (target) {
     return increaseBlockTime(diff);
 }
 
+async function sleepUntil(timeStamp) {
+    console.log("Sleeping until " + timeStamp + "...")
+    while (currentEpoch() < timeStamp) {
+        await sleep(1000)
+    }
+}
+
+const currentEpoch = () => Math.round(Date.now()/ 1000)
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 module.exports = {
     increaseBlockTime,
-    increaseBlockTimeTo
+    increaseBlockTimeTo,
+    sleepUntil,
+    currentEpoch
 }

@@ -14,7 +14,7 @@ contract("BitherCrowdsale", accounts => {
     let openingTime
     const bitherTokensOwner = accounts[0]
     const tokenBenefactor = accounts[1]
-    const etherBenefactor = accounts[5]
+    const etherBenefactor = accounts[2]
     const oneEtherWeiValue = web3.utils.toWei('1', 'ether')
     const fractionalEtherWeiValue = web3.utils.toWei('1.5', 'ether')
     const decimals = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
@@ -46,7 +46,7 @@ contract("BitherCrowdsale", accounts => {
 
     describe("constructor()", async () => {
 
-        it("costs lass than 2000000 gas", async () => {
+        it("costs less than 2000000 gas", async () => {
             maxGasCost = 2000000
             deploymentReceipt = await web3.eth.getTransactionReceipt(bitherCrowdsale.transactionHash)
             deploymentCost = deploymentReceipt.gasUsed
@@ -65,7 +65,6 @@ contract("BitherCrowdsale", accounts => {
 
             assert.isBelow(transactionGasCost, maxGasCost)
         })
-
 
         it("deposits ether to etherBenefactor address", async () => {
             const etherBenefactorBalance = await web3.eth.getBalance(etherBenefactor)
