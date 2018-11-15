@@ -29,7 +29,8 @@
 //         await deployBitherTokens()
 //         await deployBitherCrowdsale()
 //         await approveTokensForCrowdsaleAddress()
-//         await testUtils.sleepUntil(openingTime) // Wait until the Crowdsale has started before attempting tests.
+//         await testUtils.sleepUntil(openingTime + time.duration.seconds(30)) // Wait until the Crowdsale start time + plus some block offset time before attempting tests.
+//         // Block offset time is necessary as block times can be 0 to 30 seconds out of the actual current time.
 //
 //         console.log("JS time: " + testUtils.currentEpoch() + " Current block time: " + await time.latest() + " Crowdsale opening time: " + openingTime)
 //     })

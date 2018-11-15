@@ -51,10 +51,16 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const getEventArgValue = (transaction, eventName, eventArgKey) => {
+    return transaction.logs
+            .filter(log => log.event === eventName)
+            .map(log => log.args[eventArgKey])
+}
 
 module.exports = {
     increaseBlockTime,
     increaseBlockTimeTo,
     sleepUntil,
-    currentEpoch
+    currentEpoch,
+    getEventArgValue
 }
