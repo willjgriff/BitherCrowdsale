@@ -1,7 +1,8 @@
 const MultiSigWallet = artifacts.require("MultiSigWallet.sol")
+const BitherToken = artifacts.require("BitherToken.sol")
+const BitherStockToken = artifacts.require("BitherStockToken.sol")
 const BN = require("bn.js")
 const testUtils = require("./TestUtils")
-const shouldFail = require("openzeppelin-solidity/test/helpers/shouldFail")
 
 contract("MultiSigWallet", accounts => {
 
@@ -21,7 +22,7 @@ contract("MultiSigWallet", accounts => {
     describe("getOwners()", () => {
 
         it("returns the correct owners", async () => {
-            actualOwners = await multiSigWallet.getOwners()
+            const actualOwners = await multiSigWallet.getOwners()
             assert.deepEqual(actualOwners, owners)
         })
     })
@@ -55,7 +56,7 @@ contract("MultiSigWallet", accounts => {
 
     describe("confirmTransaction()", () => {
 
-        it("should execute transaction when required confirmations are made", async () => {
+        it("should execute dataless transaction when required confirmations are made", async () => {
             const expectedDestinationAccountBalance = (new BN(await web3.eth.getBalance(destinationAccount))).add(new BN(oneEtherWeiValue))
             const submitTransaction = await multiSigWallet.submitTransaction(destinationAccount, oneEtherWeiValue, zeroData)
             const transactionId = testUtils.getEventArgValue(submitTransaction, "Submission", "transactionId")
@@ -66,5 +67,55 @@ contract("MultiSigWallet", accounts => {
             const actualDestinationAccountBalance = await web3.eth.getBalance(destinationAccount)
             assert.equal(actualDestinationAccountBalance, expectedDestinationAccountBalance)
         })
+
+        it("should execute addOwner() transaction when required confirmations are made", async () => {
+            const newOwner = accounts[4]
+            const expectedOwners = owners
+            expectedOwners.push(newOwner)
+
+            const addOwnerFunctionCall = multiSigWallet.contract.methods.addOwner(newOwner).encodeABI()
+            const submitTransaction = await multiSigWallet.submitTransaction(multiSigWallet.address, 0, addOwnerFunctionCall)
+            const transactionId = testUtils.getEventArgValue(submitTransaction, "Submission", "transactionId")
+            const transactionIdBn = new BN(transactionId)
+
+            await multiSigWallet.confirmTransaction(transactionIdBn, { from: owners[1] })
+
+            const actualOwners = await multiSigWallet.getOwners()
+            assert.deepEqual(actualOwners, expectedOwners)
+        })
     })
+
+    describe("submit and confirm transaction on BitherToken", () => {
+
+        it("transfers expected tokens after enough confirmations are reached", async () => {
+            const bitherTokenOwner = accounts[4]
+            const bitherTokenReceiver = accounts[5]
+            const bitherToken = await BitherToken.new({ from: bitherTokenOwner })
+            await transferTokensToMultiSig(bitherToken, bitherTokenOwner);
+            const expectedBalance = new BN('1000' + '000000000000000000')
+            const submitTransaction = await submitTransferTransactionToMultisig(bitherToken, bitherTokenReceiver, expectedBalance);
+            const transactionIdBn = getTransactionIdBn(submitTransaction);
+
+            await multiSigWallet.confirmTransaction(transactionIdBn, { from: owners[1] })
+
+            const actualBalance = await bitherToken.balanceOf(bitherTokenReceiver)
+            assert.equal(actualBalance.toString(), expectedBalance.toString())
+        })
+    })
+
+    async function transferTokensToMultiSig(bitherToken, bitherTokenOwner) {
+        const allTokens = await bitherToken.balanceOf(bitherTokenOwner)
+        await bitherToken.transfer(multiSigWallet.address, allTokens, {from: bitherTokenOwner})
+    }
+
+    async function submitTransferTransactionToMultisig(bitherToken, bitherTokenReceiver, expectedBalance) {
+        const transferFunctionCall = bitherToken.contract.methods.transfer(bitherTokenReceiver, expectedBalance).encodeABI()
+        return await multiSigWallet.submitTransaction(bitherToken.address, 0, transferFunctionCall);
+    }
+
+    function getTransactionIdBn(submitTransaction) {
+        const transactionId = testUtils.getEventArgValue(submitTransaction, "Submission", "transactionId")
+        return new BN(transactionId);
+    }
+
 })
