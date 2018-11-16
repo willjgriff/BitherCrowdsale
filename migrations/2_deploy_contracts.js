@@ -2,19 +2,13 @@ const BitherToken = artifacts.require("./BitherToken.sol")
 const BitherStockToken = artifacts.require("./BitherStockToken.sol")
 const MultiSigWallet = artifacts.require("./MultiSigWallet.sol")
 const BitherCrowdsale = artifacts.require("./BitherCrowdsale.sol")
-const BN = require("bn.js")
-const utils = require("../Utils")
+const multiSigFunctions = require("./MultiSigFunctions")
+const config = require("./DeploymentConfig")
 
 module.exports = async (deployer, network, accounts) => {
 
-    const bitherTokensOwner = accounts[0]
-    const multiSigOwners = [accounts[0], accounts[1], accounts[2]]
-    const requiredConfirmations = 2
-    const openingTime = 1542906507 // Thursday, 22 November 2018 17:08:27, can get from here: https://www.epochconverter.com/
-
-    const decimals = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
-    const btrCrowdsaleTokens = new BN('33000000' + decimals) // tokens available * (10 ** 18) number of decimals in BTR token
-    const bskCrowdsaleTokens = new BN('21000000' + decimals) // tokens available * (10 ** 18) number of decimals in BSK token
+    const BITHER_TOKENS_INITIAL_OWNER = accounts[0]
+    const MULTISIG_OWNERS = config.MULTISIG_OWNERS ? config.MULTISIG_OWNERS : [accounts[0], accounts[1], accounts[2]]
 
     let bitherToken, bitherStockToken, multiSigWallet, bitherCrowdsale
 
@@ -22,52 +16,51 @@ module.exports = async (deployer, network, accounts) => {
     await deployMultiSigWallet()
     await transferTokensToMultiSig()
     await deployBitherCrowdsale()
-    await approveTokensForCrowdsaleAddress(bitherToken, btrCrowdsaleTokens)
-    await approveTokensForCrowdsaleAddress(bitherStockToken, bskCrowdsaleTokens)
+
+    // This should be removed for final deployment.
+    // await approveAndConfirmTokensForCrowdsale
 
     async function deployBitherTokens() {
-        await deployer.deploy(BitherToken, {from: bitherTokensOwner})
+        await deployer.deploy(BitherToken, {from: BITHER_TOKENS_INITIAL_OWNER})
         bitherToken = await BitherToken.at(BitherToken.address)
 
-        await deployer.deploy(BitherStockToken, {from: bitherTokensOwner})
+        await deployer.deploy(BitherStockToken, {from: BITHER_TOKENS_INITIAL_OWNER})
         bitherStockToken = await BitherStockToken.at(BitherStockToken.address)
     }
 
     async function deployMultiSigWallet() {
-        await deployer.deploy(MultiSigWallet, multiSigOwners, requiredConfirmations, { from: accounts[0] })
+        await deployer.deploy(MultiSigWallet, MULTISIG_OWNERS, config.MULTISIG_CONFIRMATIONS, { from: accounts[0] })
         multiSigWallet = await MultiSigWallet.at(MultiSigWallet.address)
     }
 
     async function transferTokensToMultiSig() {
-        const allBtrTokens = await bitherToken.balanceOf(bitherTokensOwner)
-        await bitherToken.transfer(MultiSigWallet.address, allBtrTokens, {from: bitherTokensOwner})
-        console.log("Original owner BTR Balance: " + await bitherToken.balanceOf(bitherTokensOwner))
+        const allBtrTokens = await bitherToken.balanceOf(BITHER_TOKENS_INITIAL_OWNER)
+        await bitherToken.transfer(MultiSigWallet.address, allBtrTokens, {from: BITHER_TOKENS_INITIAL_OWNER})
+        console.log("Original owner BTR Balance: " + await bitherToken.balanceOf(BITHER_TOKENS_INITIAL_OWNER))
         console.log("MultiSig BTR Balance: " + await bitherToken.balanceOf(MultiSigWallet.address))
 
-        const allBskTokens = await bitherStockToken.balanceOf(bitherTokensOwner)
-        await bitherStockToken.transfer(MultiSigWallet.address, allBskTokens, {from: bitherTokensOwner})
-        console.log("Original owner BSK Balance: " + await bitherStockToken.balanceOf(bitherTokensOwner))
+        const allBskTokens = await bitherStockToken.balanceOf(BITHER_TOKENS_INITIAL_OWNER)
+        await bitherStockToken.transfer(MultiSigWallet.address, allBskTokens, {from: BITHER_TOKENS_INITIAL_OWNER})
+        console.log("Original owner BSK Balance: " + await bitherStockToken.balanceOf(BITHER_TOKENS_INITIAL_OWNER))
         console.log("MultiSig BSK Balance: " + await bitherStockToken.balanceOf(MultiSigWallet.address))
     }
 
     async function deployBitherCrowdsale() {
         await deployer.deploy(BitherCrowdsale, BitherToken.address, BitherStockToken.address,
-            MultiSigWallet.address, MultiSigWallet.address, openingTime)
+            MultiSigWallet.address, MultiSigWallet.address, config.CROWDSALE_OPENING_TIME)
         bitherCrowdsale = await BitherCrowdsale.at(BitherCrowdsale.address)
     }
 
-    async function approveTokensForCrowdsaleAddress(token, numberOfTokens) {
-        const approveFunctionCall = token.contract.methods.approve(bitherCrowdsale.address, numberOfTokens).encodeABI()
-        const approveTransaction = await multiSigWallet.submitTransaction(token.address, 0, approveFunctionCall, {from: multiSigOwners[0]})
-        const approveTransactionId = getTransactionIdBn(approveTransaction)
-        await multiSigWallet.confirmTransaction(approveTransactionId, {from: multiSigOwners[1]})
-        const approvedTokens = await token.allowance(multiSigWallet.address, bitherCrowdsale.address)
-        console.log(approvedTokens + " of " + await token.name() + " approved for BitherCrowdsale contract")
-    }
-
-    function getTransactionIdBn(submitTransaction) {
-        const transactionId = utils.getEventArgValue(submitTransaction, "Submission", "transactionId")
-        return new BN(transactionId);
+    /**
+     * This should be removed for final deployment and approvals and confirmations executed by MultiSig Owners.
+     */
+    async function approveAndConfirmTokensForCrowdsale() {
+        const multiSigApproveBtrTransactionId = await multiSigFunctions.submitApproveBtrTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherToken)
+        await multiSigFunctions.confirmApproveTransactionForMultiSig(multiSigWallet, multiSigApproveBtrTransactionId, MULTISIG_OWNERS[1])
+        const multiSigApproveBskTransactionId = await multiSigFunctions.submitApproveBskTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherStockToken)
+        await multiSigFunctions.confirmApproveTransactionForMultiSig(multiSigWallet, multiSigApproveBskTransactionId, MULTISIG_OWNERS[1])
+        await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherToken)
+        await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherStockToken)
     }
 
 }
