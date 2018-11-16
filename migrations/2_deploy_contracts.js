@@ -3,14 +3,14 @@ const BitherStockToken = artifacts.require("./BitherStockToken.sol")
 const MultiSigWallet = artifacts.require("./MultiSigWallet.sol")
 const BitherCrowdsale = artifacts.require("./BitherCrowdsale.sol")
 const BN = require("bn.js")
-const deployUtils = require("./DeployUtils")
+const utils = require("../Utils")
 
 module.exports = async (deployer, network, accounts) => {
 
     const bitherTokensOwner = accounts[0]
     const multiSigOwners = [accounts[0], accounts[1], accounts[2]]
     const requiredConfirmations = 2
-    const openingTime = 1542906507 // Thursday, 22 November 2018 17:08:27
+    const openingTime = 1542906507 // Thursday, 22 November 2018 17:08:27, can get from here: https://www.epochconverter.com/
 
     const decimals = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
     const btrCrowdsaleTokens = new BN('33000000' + decimals) // tokens available * (10 ** 18) number of decimals in BTR token
@@ -34,7 +34,7 @@ module.exports = async (deployer, network, accounts) => {
     }
 
     async function deployMultiSigWallet() {
-        await deployer.deploy(MultiSigWallet, multiSigOwners, requiredConfirmations)
+        await deployer.deploy(MultiSigWallet, multiSigOwners, requiredConfirmations, { from: accounts[0] })
         multiSigWallet = await MultiSigWallet.at(MultiSigWallet.address)
     }
 
@@ -57,14 +57,16 @@ module.exports = async (deployer, network, accounts) => {
     }
 
     async function approveTokensForCrowdsaleAddress(token, numberOfTokens) {
-        const approveBtrFunctionCall = token.contract.methods.approve(bitherCrowdsale.address, numberOfTokens).encodeABI()
-        const approveTransaction = await multiSigWallet.submitTransaction(token.address, 0, approveBtrFunctionCall, {from: multiSigOwners[0]})
+        const approveFunctionCall = token.contract.methods.approve(bitherCrowdsale.address, numberOfTokens).encodeABI()
+        const approveTransaction = await multiSigWallet.submitTransaction(token.address, 0, approveFunctionCall, {from: multiSigOwners[0]})
         const approveTransactionId = getTransactionIdBn(approveTransaction)
         await multiSigWallet.confirmTransaction(approveTransactionId, {from: multiSigOwners[1]})
+        const approvedTokens = await token.allowance(multiSigWallet.address, bitherCrowdsale.address)
+        console.log(approvedTokens + " of " + await token.name() + " approved for BitherCrowdsale contract")
     }
 
     function getTransactionIdBn(submitTransaction) {
-        const transactionId = deployUtils.getEventArgValue(submitTransaction, "Submission", "transactionId")
+        const transactionId = utils.getEventArgValue(submitTransaction, "Submission", "transactionId")
         return new BN(transactionId);
     }
 

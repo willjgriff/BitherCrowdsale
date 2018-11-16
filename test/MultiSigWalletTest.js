@@ -11,12 +11,12 @@ contract("MultiSigWallet", accounts => {
     const requiredConfirmations = 2
 
     const destinationAccount = accounts[3]
-    const oneEtherWeiValue = web3.utils.toWei('1', 'ether')
+    const oneEtherWeiValue = web3.utils.toWei('0.001', 'ether')
     const zeroData = "0x00"
 
     beforeEach(async () => {
         multiSigWallet = await MultiSigWallet.new(owners, requiredConfirmations)
-        await multiSigWallet.send(web3.utils.toWei('2', 'ether'))
+        await multiSigWallet.send(web3.utils.toWei('0.002', 'ether'))
     })
 
     describe("getOwners()", () => {
