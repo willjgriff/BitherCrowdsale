@@ -5,6 +5,13 @@ const MultiSigWallet = artifacts.require("MultiSigWallet")
 const multiSigFunctions = require("../migrations/MultiSigFunctions")
 const config = require("../migrations/DeploymentConfig")
 
+/**
+ * This script should be called by one (and only one) of the MultiSig owners after deployment. This submits
+ * an approval transaction to the multisig wallet which will allow the crowdsale contract to distribute
+ * the specified number of tokens.
+ *
+ * Call with 'truffle exec scripts/SubmitApprovalsToMultiSig.js'
+ */
 module.exports = async function(callback) {
     const bitherToken = await BitherToken.at(config.BITHER_TOKEN_ADDRESS ? config.BITHER_TOKEN_ADDRESS : BitherToken.address)
     const bitherStockToken = await BitherStockToken.at(config.BITHER_STOCK_TOKEN_ADDRESS ? config.BITHER_STOCK_TOKEN_ADDRESS : BitherStockToken.address)

@@ -5,6 +5,12 @@ const MultiSigWallet = artifacts.require("MultiSigWallet")
 const multiSigFunctions = require("../migrations/MultiSigFunctions")
 const config = require("../migrations/DeploymentConfig")
 
+/**
+ * This script is for checking the allowance given to the Crowdsale contract. It should be used once
+ * the Approvals have been submitted and the confirmation for those approvals have been made.
+ *
+ * Call with 'truffle exec scripts/DisplayAllowanceForCrowdsale.js'
+ */
 module.exports = async function(callback) {
     const bitherToken = await BitherToken.at(config.BITHER_TOKEN_ADDRESS ? config.BITHER_TOKEN_ADDRESS : BitherToken.address)
     const bitherStockToken = await BitherStockToken.at(config.BITHER_STOCK_TOKEN_ADDRESS ? config.BITHER_STOCK_TOKEN_ADDRESS : BitherStockToken.address)
