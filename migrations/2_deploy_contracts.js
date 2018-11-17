@@ -2,8 +2,8 @@ const BitherToken = artifacts.require("./BitherToken.sol")
 const BitherStockToken = artifacts.require("./BitherStockToken.sol")
 const MultiSigWallet = artifacts.require("./MultiSigWallet.sol")
 const BitherCrowdsale = artifacts.require("./BitherCrowdsale.sol")
-const multiSigFunctions = require("./MultiSigFunctions")
 const config = require("./DeploymentConfig")
+const multiSigFunctions = require("./MultiSigFunctions")
 
 module.exports = async (deployer, network, accounts) => {
 
@@ -17,8 +17,11 @@ module.exports = async (deployer, network, accounts) => {
     await transferTokensToMultiSig()
     await deployBitherCrowdsale()
 
-    // This should be removed for final deployment.
-    // await approveAndConfirmTokensForCrowdsale
+    /**
+     * This should be removed/commented for final deployment.
+     * Approvals and confirmations should be executed independently by MultiSig Owners.
+     */
+    await approveAndConfirmTokensForCrowdsale()
 
     async function deployBitherTokens() {
         await deployer.deploy(BitherToken, {from: BITHER_TOKENS_INITIAL_OWNER})
@@ -51,16 +54,16 @@ module.exports = async (deployer, network, accounts) => {
         bitherCrowdsale = await BitherCrowdsale.at(BitherCrowdsale.address)
     }
 
-    /**
-     * This should be removed for final deployment and approvals and confirmations executed by MultiSig Owners.
-     */
     async function approveAndConfirmTokensForCrowdsale() {
-        const multiSigApproveBtrTransactionId = await multiSigFunctions.submitApproveBtrTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherToken)
-        await multiSigFunctions.confirmApproveTransactionForMultiSig(multiSigWallet, multiSigApproveBtrTransactionId, MULTISIG_OWNERS[1])
-        const multiSigApproveBskTransactionId = await multiSigFunctions.submitApproveBskTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherStockToken)
-        await multiSigFunctions.confirmApproveTransactionForMultiSig(multiSigWallet, multiSigApproveBskTransactionId, MULTISIG_OWNERS[1])
-        await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherToken)
-        await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherStockToken)
+        const multiSigFunctionsObject = new multiSigFunctions.MultiSigFunctions(multiSigWallet, bitherCrowdsale, bitherToken, bitherStockToken)
+
+        const multiSigApproveBtrTransactionId = await multiSigFunctionsObject.submitApproveBtrTransactionToMultiSig()
+        await multiSigFunctionsObject.confirmApproveTransactionForMultiSig(multiSigApproveBtrTransactionId, MULTISIG_OWNERS[1])
+        await multiSigFunctionsObject.displayBtrAllowanceForCrowdsale()
+
+        const multiSigApproveBskTransactionId = await multiSigFunctionsObject.submitApproveBskTransactionToMultiSig()
+        await multiSigFunctionsObject.confirmApproveTransactionForMultiSig(multiSigApproveBskTransactionId, MULTISIG_OWNERS[1])
+        await multiSigFunctionsObject.displayBskAllowanceForCrowdsale()
     }
 
 }

@@ -2,45 +2,59 @@ const utils = require("../Utils")
 const BN = require("bn.js")
 const config = require("./DeploymentConfig")
 
-const DECIMALS = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
+export default class MultiSigFunctions {
 
-async function submitApproveBtrTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherToken) {
-    const btrCrowdsaleTokens = new BN(config.BTR_CROWDSALE_ALLOWANCE + DECIMALS)
-    const transaction = await submitApproveTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherToken, btrCrowdsaleTokens)
-    return getAndDisplayTransactionIdBn(transaction, "BTR")
-}
+    constructor(multiSigWallet, bitherCrowdsale, bitherToken, bitherStockToken) {
+        this.DECIMALS = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
+        this.multiSigWallet = multiSigWallet
+        this.bitherCrowdsale = bitherCrowdsale
+        this.bitherToken = bitherToken
+        this.bitherStockToken = bitherStockToken
+    }
 
-async function submitApproveBskTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherStockToken) {
-    const bskCrowdsaleTokens = new BN(config.BSK_CROWDSALE_ALLOWANCE + DECIMALS)
-    const transaction = await submitApproveTransactionToMultiSig(multiSigWallet, bitherCrowdsale, bitherStockToken, bskCrowdsaleTokens)
-    return getAndDisplayTransactionIdBn(transaction, "BSK")
-}
+    async submitApproveBtrTransactionToMultiSig() {
+        const btrCrowdsaleTokens = new BN(config.BTR_CROWDSALE_ALLOWANCE + this.DECIMALS)
+        const transaction = await this.submitApproveTransactionToMultiSig(this.bitherToken, btrCrowdsaleTokens)
+        const tokenName = await this.bitherToken.name()
+        return this.getAndDisplayTransactionIdBn(transaction, tokenName)
+    }
 
-async function submitApproveTransactionToMultiSig(multiSigWallet, bitherCrowdsale, token, numberOfTokens) {
-    const approveFunctionCall = token.contract.methods.approve(bitherCrowdsale.address, numberOfTokens).encodeABI()
-    return await multiSigWallet.submitTransaction(token.address, 0, approveFunctionCall)
-}
+    async submitApproveBskTransactionToMultiSig() {
+        const bskCrowdsaleTokens = new BN(config.BSK_CROWDSALE_ALLOWANCE + this.DECIMALS)
+        const transaction = await this.submitApproveTransactionToMultiSig(this.bitherStockToken, bskCrowdsaleTokens)
+        const tokenName = await this.bitherStockToken.name()
+        return this.getAndDisplayTransactionIdBn(transaction, tokenName)
+    }
 
-function getAndDisplayTransactionIdBn(submitTransaction, token) {
-    const multiSigTransactionId = utils.getEventArgValue(submitTransaction, "Submission", "transactionId")
-    console.log("   Approve Transaction for " + token + " added to MultiSig.\n" +
-                "   MultiSig Transaction ID: " + multiSigTransactionId + " needs to be confirmed by MultiSig Owners before it is executed")
-    return new BN(multiSigTransactionId);
-}
+    async submitApproveTransactionToMultiSig(token, numberOfTokens) {
+        const approveFunctionCall = token.contract.methods.approve(this.bitherCrowdsale.address, numberOfTokens).encodeABI()
+        return await this.multiSigWallet.submitTransaction(token.address, 0, approveFunctionCall)
+    }
 
-async function confirmApproveTransactionForMultiSig(multiSigWallet, multiSigTransactionId, multiSigOwner) {
-    await multiSigWallet.confirmTransaction(multiSigTransactionId, {from: multiSigOwner})
-    console.log("MultiSig Transaction " + multiSigTransactionId + " confirmed by " + multiSigOwner)
-}
+    getAndDisplayTransactionIdBn(submitTransaction, token) {
+        const multiSigTransactionId = utils.getEventArgValue(submitTransaction, "Submission", "transactionId")
+        console.log("   Approve Transaction for " + token + " added to MultiSig.\n" +
+                    "   MultiSig Transaction ID: " + multiSigTransactionId + " needs " +
+                    "to be confirmed by MultiSig Owners before it is executed")
+        return new BN(multiSigTransactionId);
+    }
 
-async function displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, token) {
-    const approvedTokens = await token.allowance(multiSigWallet.address, bitherCrowdsale.address)
-    console.log(approvedTokens + " tokens of " + await token.name() + " approved for BitherCrowdsale contract")
-}
+    async confirmApproveTransactionForMultiSig(multiSigTransactionId, multiSigOwner) {
+        await this.multiSigWallet.confirmTransaction(multiSigTransactionId, {from: multiSigOwner})
+        console.log("   MultiSig Transaction " + multiSigTransactionId + " confirmed by " + multiSigOwner)
+    }
 
-module.exports = {
-    submitApproveBtrTransactionToMultiSig,
-    submitApproveBskTransactionToMultiSig,
-    confirmApproveTransactionForMultiSig,
-    displayAllowanceForCrowdsale
+    async displayBtrAllowanceForCrowdsale() {
+        await this.displayAllowanceForCrowdsale(this.bitherToken)
+    }
+
+    async displayBskAllowanceForCrowdsale() {
+        await this.displayAllowanceForCrowdsale(this.bitherStockToken)
+    }
+
+    async displayAllowanceForCrowdsale(token) {
+        const approvedTokens = await token.allowance(this.multiSigWallet.address, this.bitherCrowdsale.address)
+        console.log("   " + approvedTokens + " tokens of " + await token.name() + " approved for BitherCrowdsale contract")
+    }
+
 }

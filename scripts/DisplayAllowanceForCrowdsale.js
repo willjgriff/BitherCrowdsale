@@ -17,8 +17,9 @@ module.exports = async function(callback) {
     const bitherCrowdsale = await BitherCrowdsale.at(config.BITHER_CROWDSALE_ADDRESS ? config.BITHER_CROWDSALE_ADDRESS : BitherCrowdsale.address)
     const multiSigWallet = await MultiSigWallet.at(config.MULTI_SIG_WALLET_ADDRESS ? config.MULTISIG_WALLET_ADDRESS : MultiSigWallet.address)
 
-    await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherToken)
-    await multiSigFunctions.displayAllowanceForCrowdsale(multiSigWallet, bitherCrowdsale, bitherStockToken)
+    const multiSigFunctionsObject = new multiSigFunctions.MultiSigFunctions(multiSigWallet, bitherCrowdsale, bitherToken, bitherStockToken)
+    await multiSigFunctionsObject.displayBtrAllowanceForCrowdsale()
+    await multiSigFunctionsObject.displayBskAllowanceForCrowdsale()
 
     // process.exit()
 }
