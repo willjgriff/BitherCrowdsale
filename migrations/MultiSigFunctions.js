@@ -2,7 +2,7 @@ const utils = require("../Utils")
 const BN = require("bn.js")
 const config = require("./DeploymentConfig")
 
-export default class MultiSigFunctions {
+class MultiSigFunctions {
 
     constructor(multiSigWallet, bitherCrowdsale, bitherToken, bitherStockToken) {
         this.DECIMALS = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
@@ -57,4 +57,8 @@ export default class MultiSigFunctions {
         console.log("   " + approvedTokens + " tokens of " + await token.name() + " approved for BitherCrowdsale contract")
     }
 
+}
+
+module.exports = {
+    MultiSigFunctions
 }

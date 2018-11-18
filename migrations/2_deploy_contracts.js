@@ -21,7 +21,7 @@ module.exports = async (deployer, network, accounts) => {
      * This should be removed/commented for final deployment.
      * Approvals and confirmations should be executed independently by MultiSig Owners.
      */
-    await approveAndConfirmTokensForCrowdsale()
+    // await approveAndConfirmTokensForCrowdsale()
 
     async function deployBitherTokens() {
         await deployer.deploy(BitherToken, {from: BITHER_TOKENS_INITIAL_OWNER})

@@ -18,18 +18,33 @@ import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol
 contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale {
 
     uint256 private capInWei = 300000 ether;
-    uint256 private crowdsaleLength = 13 days;
+    uint256 private crowdsaleLength = 41 days;
 
+    // BTR Presale Rates
     uint256 private btrRateDay1 = 110;
     uint256 private btrRateDay2to5 = 109;
     uint256 private btrRateDay6to9 = 108;
     uint256 private btrRateDay10to13 = 107;
 
+    // BTR Crowdsale rates
+    uint256 private btrRateDay14First2Hours = 110;
+    uint256 private btrRateDay14to20 = 106;
+    uint256 private btrRateDay21to27 = 104;
+    uint256 private btrRateDay28to34 = 102;
+    uint256 private btrRateDay35to41 = 100;
+
+    // BSK Presale Rates
     uint256 private bskRateFirst2Hours = 70;
     uint256 private bskRateDay1 = 68;
     uint256 private bskRateDay2to5 = 66;
     uint256 private bskRateDay6to9 = 64;
     uint256 private bskRateDay10to13 = 62;
+
+    // BSK Crowdsale Rates
+    uint256 private bskRateDay14to20 = 60;
+    uint256 private bskRateDay21to27 = 57;
+    uint256 private bskRateDay28to34 = 54;
+    uint256 private bskRateDay35to41 = 50;
 
     IERC20 private _bitherStockToken;
 
@@ -72,8 +87,18 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
             return weiAmount.mul(btrRateDay2to5);
         } else if (now < openingTime() + 9 days) {
             return weiAmount.mul(btrRateDay6to9);
-        } else if (now <= closingTime()) {
+        } else if (now < openingTime() + 13 days) {
             return weiAmount.mul(btrRateDay10to13);
+        } else if (now < openingTime() + 13 days + 2 hours) {
+            return weiAmount.mul(btrRateDay14First2Hours);
+        } else if (now < openingTime() + 20 days) {
+            return weiAmount.mul(btrRateDay14to20);
+        } else if (now < openingTime() + 27 days) {
+            return weiAmount.mul(btrRateDay21to27);
+        } else if (now < openingTime() + 34 days) {
+            return weiAmount.mul(btrRateDay28to34);
+        } else if (now < openingTime() + 41 days) {
+            return weiAmount.mul(btrRateDay35to41);
         }
     }
 
