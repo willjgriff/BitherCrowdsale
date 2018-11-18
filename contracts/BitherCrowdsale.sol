@@ -97,7 +97,7 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
             return weiAmount.mul(btrRateDay21to27);
         } else if (now < openingTime() + 34 days) {
             return weiAmount.mul(btrRateDay28to34);
-        } else if (now < openingTime() + 41 days) {
+        } else if (now <= closingTime()) {
             return weiAmount.mul(btrRateDay35to41);
         }
     }
@@ -133,8 +133,16 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
             return weiAmount.mul(bskRateDay2to5);
         } else if (now < openingTime() + 9 days) {
             return weiAmount.mul(bskRateDay6to9);
-        } else if (now <= closingTime()) {
+        } else if (now < openingTime() + 13 days) {
             return weiAmount.mul(bskRateDay10to13);
+        } else if (now < openingTime() + 20 days) {
+            return weiAmount.mul(bskRateDay14to20);
+        } else if (now < openingTime() + 27 days) {
+            return weiAmount.mul(bskRateDay21to27);
+        } else if (now < openingTime() + 34 days) {
+            return weiAmount.mul(bskRateDay28to34);
+        } else if (now <= closingTime()) {
+            return weiAmount.mul(bskRateDay35to41);
         }
     }
 }
