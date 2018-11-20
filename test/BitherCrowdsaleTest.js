@@ -29,8 +29,8 @@ contract("BitherCrowdsale", accounts => {
     })
 
     async function deployBitherTokens() {
-        bitherToken = await BitherToken.new({ from: bitherTokensOwner })
-        bitherStockToken = await BitherStockToken.new({ from: bitherTokensOwner })
+        bitherToken = await BitherToken.new({from: bitherTokensOwner})
+        bitherStockToken = await BitherStockToken.new({from: bitherTokensOwner})
     }
 
     async function deployBitherCrowdsale() {
@@ -40,8 +40,8 @@ contract("BitherCrowdsale", accounts => {
     }
 
     async function approveTokensForCrowdsaleAddress() {
-        await bitherToken.approve(bitherCrowdsale.address, btrCrowdsaleTokens, { from: bitherTokensOwner })
-        await bitherStockToken.approve(bitherCrowdsale.address, bskCrowdsaleTokens, { from: bitherTokensOwner })
+        await bitherToken.approve(bitherCrowdsale.address, btrCrowdsaleTokens, {from: bitherTokensOwner})
+        await bitherStockToken.approve(bitherCrowdsale.address, bskCrowdsaleTokens, {from: bitherTokensOwner})
     }
 
     describe("constructor()", async () => {
@@ -60,7 +60,10 @@ contract("BitherCrowdsale", accounts => {
         it("costs less than 200000 gas", async () => {
             const maxGasCost = 200000
 
-            transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+            transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, {
+                value: oneEtherWeiValue,
+                from: tokenBenefactor
+            })
             const transactionGasCost = transaction.receipt.gasUsed
 
             assert.isBelow(transactionGasCost, maxGasCost)
@@ -70,7 +73,7 @@ contract("BitherCrowdsale", accounts => {
             const etherBenefactorBalance = await web3.eth.getBalance(etherBenefactor)
             const expectedEtherBalance = new BN(etherBenefactorBalance).add(new BN(oneEtherWeiValue))
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: oneEtherWeiValue, from: tokenBenefactor})
 
             const actualEtherBalance = await web3.eth.getBalance(etherBenefactor)
             assert.equal(actualEtherBalance, expectedEtherBalance)
@@ -81,7 +84,7 @@ contract("BitherCrowdsale", accounts => {
             await testUtils.increaseBlockTimeTo(closingTime)
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                { value: oneEtherWeiValue, from: tokenBenefactor }))
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
         it("reverts before the crowdsale has started", async () => {
@@ -90,7 +93,7 @@ contract("BitherCrowdsale", accounts => {
             await testUtils.increaseBlockTimeTo(timeBeforeOpening)
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                { value: oneEtherWeiValue, from: tokenBenefactor }))
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
         // The following 3 tests require ganache-cli to be run with '-e [account balance]' where account balance is a high amount of ether.
@@ -98,26 +101,26 @@ contract("BitherCrowdsale", accounts => {
             // 300000 * 110 (first day BTR rate) = 30000000 BTR tokens + 3000000 bonus BTR tokens = 33000000 BTR
             // 300000 * 70 (first 2 hours BSK rate) = 15000000 BSK tokens + 6000000 bonus BSK tokens = 21000000 BTR
             const largeEtherWeiValue = web3.utils.toWei('300000', 'ether')
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: largeEtherWeiValue, from: tokenBenefactor})
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                { value: oneEtherWeiValue, from: tokenBenefactor }))
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
         it("reverts when cap of 300000 ether is reached over multiple time periods", async () => {
             const largeEtherWeiValue = web3.utils.toWei('150000', 'ether')
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: largeEtherWeiValue, from: tokenBenefactor})
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
             await testUtils.increaseBlockTimeTo(openingTime + time.duration.days(2))
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: largeEtherWeiValue, from: tokenBenefactor})
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                { value: oneEtherWeiValue, from: tokenBenefactor }))
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
         it("has no allowance of tokens when cap of 300000 ether is reached", async () => {
             const largeEtherWeiValue = web3.utils.toWei('300000', 'ether')
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: largeEtherWeiValue, from: tokenBenefactor})
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
 
             const remainingBtr = await bitherCrowdsale.remainingTokens()
             const remainingBsk = await bitherStockToken.allowance(bitherTokensOwner, bitherCrowdsale.address)
@@ -130,55 +133,57 @@ contract("BitherCrowdsale", accounts => {
             await bitherStockToken.approve(bitherCrowdsale.address, 0)
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                { value: oneEtherWeiValue, from: tokenBenefactor }))
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
     })
 
     describe("buyTokens(address beneficiary) BTR token tests", async () => {
 
-        it("purchases 110 tokens for 1 ether at start of sale", async () => {
-            const expectedTokenBalance = new BN('110' + decimals)
+        const purchaseFor1EtherAfterDayTestCases = [
+            new PurchaseFor1EtherAfterDayTestCase("110", 0),
+            new PurchaseFor1EtherAfterDayTestCase("109", 1),
+            new PurchaseFor1EtherAfterDayTestCase("108", 5),
+            new PurchaseFor1EtherAfterDayTestCase("107", 9),
+            new PurchaseFor1EtherAfterDayTestCase("110", 13),
+            new PurchaseFor1EtherAfterDayTestCase("104", 20),
+            new PurchaseFor1EtherAfterDayTestCase("102", 27),
+            new PurchaseFor1EtherAfterDayTestCase("100", 34),
+        ]
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+        const purchaseFor1EtherBeforeDayTestCases = [
+            new PurchaseFor1EtherBeforeDayTestCase("109", 5),
+            new PurchaseFor1EtherBeforeDayTestCase("108", 9),
+            new PurchaseFor1EtherBeforeDayTestCase("107", 13),
+            new PurchaseFor1EtherBeforeDayTestCase("107", 13),
+            new PurchaseFor1EtherBeforeDayTestCase("106", 20),
+            new PurchaseFor1EtherBeforeDayTestCase("104", 27),
+            new PurchaseFor1EtherBeforeDayTestCase("102", 34),
+            new PurchaseFor1EtherBeforeDayTestCase("100", 41),
+        ]
 
-            const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
-            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
+        function PurchaseFor1EtherAfterDayTestCase(expectedTokens, afterDay) {
+            this.expectedTokens = expectedTokens
+            this.afterDay = afterDay
+        }
+
+        function PurchaseFor1EtherBeforeDayTestCase(expectedTokens, beforeDay) {
+            this.expectedTokens = expectedTokens
+            this.beforeDay = beforeDay
+        }
+
+        purchaseFor1EtherAfterDayTestCases.forEach((testCase) => {
+            it("purchases " + testCase.expectedTokens + " tokens for 1 ether after day " + testCase.afterDay.toString(), async () => {
+                const phaseOpeningTime = openingTime + time.duration.days(testCase.afterDay) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
+                await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherToken, phaseOpeningTime)
+            })
         })
 
-        it("purchases 109 tokens for 1 ether after 1st day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(1) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('109', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 109 tokens for 1 ether before the end of the 5th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(5) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('109', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 108 tokens for 1 ether after 5th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(5) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('108', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 108 tokens for 1 ether before the end of the 9th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(9) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('108', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 107 tokens for 1 ether after 9th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(9) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('107', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 107 tokens for 1 ether before the end of the 13th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(13) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('107', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 110 tokens for 1 ether after 13th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(13) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('110', bitherToken, phaseOpeningTime)
+        purchaseFor1EtherBeforeDayTestCases.forEach((testCase) => {
+            it("purchases " + testCase.expectedTokens + " tokens for 1 ether before the end of day " + testCase.beforeDay.toString(), async () => {
+                const phaseFinalTime = openingTime + time.duration.days(testCase.beforeDay) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
+                await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherToken, phaseFinalTime)
+            })
         })
 
         it("purchases 110 tokens for 1 ether before the end of the 2nd hour on the 14th day", async () => {
@@ -191,45 +196,10 @@ contract("BitherCrowdsale", accounts => {
             await buyTokensAndAssertTokensPurchased('106', bitherToken, phaseOpeningTime)
         })
 
-        it("purchases 106 tokens for 1 ether before the end of the 20th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(20) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('106', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 104 tokens for 1 ether after 20th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(20) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('104', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 104 tokens for 1 ether before the end of the 27th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(27) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('104', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 102 tokens for 1 ether after 27th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(27) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('102', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 102 tokens for 1 ether before the end of the 34th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(34) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('102', bitherToken, phaseFinalTime)
-        })
-
-        it("purchases 100 tokens for 1 ether after 34th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(34) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('100', bitherToken, phaseOpeningTime)
-        })
-
-        it("purchases 100 tokens for 1 ether before the end of the 41th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(41) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('100', bitherToken, phaseFinalTime)
-        })
-
         it("purchases 165 tokens for 1.5 ether during 1st phase", async () => {
             const expectedTokenBalance = new BN('165' + decimals)
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: fractionalEtherWeiValue, from: tokenBenefactor })
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: fractionalEtherWeiValue, from: tokenBenefactor})
 
             const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
@@ -289,7 +259,7 @@ contract("BitherCrowdsale", accounts => {
         it("purchases 70 tokens for 1 ether at start of sale", async () => {
             const expectedTokenBalance = new BN('70' + decimals)
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: oneEtherWeiValue, from: tokenBenefactor})
 
             const actualTokenBalance = await bitherStockToken.balanceOf(tokenBenefactor)
             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
@@ -378,7 +348,7 @@ contract("BitherCrowdsale", accounts => {
         it("purchases 105 tokens for 1.5 ether during 1st phase", async () => {
             const expectedTokenBalance = new BN('105' + decimals)
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, { value: fractionalEtherWeiValue, from: tokenBenefactor })
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: fractionalEtherWeiValue, from: tokenBenefactor})
 
             const actualTokenBalance = await bitherStockToken.balanceOf(tokenBenefactor)
             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
@@ -437,7 +407,7 @@ contract("BitherCrowdsale", accounts => {
         const expectedTokenBalance = new BN(expectedTokenBalanceString + decimals)
         await testUtils.increaseBlockTimeTo(atTime)
 
-        await bitherCrowdsale.buyTokens(tokenBenefactor, { value: oneEtherWeiValue, from: tokenBenefactor })
+        await bitherCrowdsale.buyTokens(tokenBenefactor, {value: oneEtherWeiValue, from: tokenBenefactor})
 
         const actualTokenBalance = await tokenContract.balanceOf(tokenBenefactor)
         assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
@@ -446,7 +416,7 @@ contract("BitherCrowdsale", accounts => {
     async function buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalanceBn, tokenContract, atTime) {
         await testUtils.increaseBlockTimeTo(atTime)
 
-        await bitherCrowdsale.buyTokens(tokenBenefactor, { value: fractionalEtherWeiValue, from: tokenBenefactor })
+        await bitherCrowdsale.buyTokens(tokenBenefactor, {value: fractionalEtherWeiValue, from: tokenBenefactor})
 
         const actualTokenBalance = await tokenContract.balanceOf(tokenBenefactor)
         assert.equal(actualTokenBalance.toString(), expectedTokenBalanceBn.toString())
