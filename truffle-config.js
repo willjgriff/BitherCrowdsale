@@ -48,7 +48,7 @@ module.exports = {
         //
         development: {
             host: "127.0.0.1",     // Localhost (default: none)
-            port: 8555,            // Standard Ethereum port (default: none)
+            port: 8545,            // Standard Ethereum port (default: none)
             network_id: "*",       // Any network (default: none)
         },
 
@@ -76,7 +76,7 @@ module.exports = {
 
         mainnet: {
             provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${infuraKey}`, 0, 6),
-            network_id: 1,       // Ropsten's id
+            network_id: 1,
             gas: 8000000,
             gasPrice: 10000000000,  // 10 gwei
             confirmations: 1,    // # of confs to wait between deployments. (default: 0)

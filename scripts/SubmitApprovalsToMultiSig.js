@@ -10,7 +10,7 @@ const config = require("../migrations/DeploymentConfig")
  * an approval transaction to the multisig wallet which will allow the crowdsale contract to distribute
  * the specified number of tokens.
  *
- * Call with 'truffle exec scripts/SubmitApprovalsToMultiSig.js'
+ * Call with 'truffle --network [ropsten/mainnet] exec scripts/SubmitApprovalsToMultiSig.js'
  */
 module.exports = async function(callback) {
     const bitherToken = await BitherToken.at(config.BITHER_TOKEN_ADDRESS ? config.BITHER_TOKEN_ADDRESS : BitherToken.address)
@@ -22,5 +22,5 @@ module.exports = async function(callback) {
     await multiSigFunctionsObject.submitApproveBtrTransactionToMultiSig()
     await multiSigFunctionsObject.submitApproveBskTransactionToMultiSig()
 
-    // process.exit()
+    process.exit()
 }
