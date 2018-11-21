@@ -14,7 +14,7 @@ Installation:
     Install ganache-cli with:
         npm install -g ganache-cli
 
-    In the bither-crowdsale root directory add a '.secret' file with:
+    Navigate to the bither-crowdsale root directory and add a '.secret' file with:
         touch .secret
     When running tests, this file can be left empty.
     When deploying to the blockchain, this file must contain the seed mnemonic for an account with Ether in it.
@@ -45,6 +45,8 @@ Deployment to Main Net:
 
 Post deployment scripts, consider using the MultiSig UI provided by Gnosis instead of these scripts:
 
+    Requires that the user copy the mnemonic that represents their account into the .secret file.
+
     This is a multi-step process, each of the MultiSig owners must download and install this project as per the
     installation instructions above, then:
 
@@ -53,7 +55,7 @@ Post deployment scripts, consider using the MultiSig UI provided by Gnosis inste
     SubmitConfirmationsToMultiSig.js needs to be executed by enough owners of the MultiSig to satisfy
     the confirmation count specified when the MultiSig was created.
 
-    DisplayAllowanceForCrowdsale.js can be executed once enough MultiSig owners have confirmed the approval transactions
+    DisplayAllowanceForCrowdsale.js can be executed once enough MultiSig owners have confirmed the approval transactions.
     This will display the allowance of tokens for the Crowdsale to sell confirming if it is ready to distribute funds.
 
 
