@@ -3,7 +3,7 @@ Keep in mind that I use a mac/osx, some commands may differ on Windows.
 
 
 Installation:
-    Requires installation of: node, truffle (5.0.0-beta.1 version), ganache-cli
+    Requires installation of: node, truffle (5.0.0-beta.1 version), ganache-cli and npm dependencies
 
     Get node here: https://nodejs.org/en/
 
@@ -13,6 +13,9 @@ Installation:
 
     Install ganache-cli with:
         npm install -g ganache-cli
+
+    Install npm dependencies by navigating to the bither-crowdsale directory and executing:
+        npm install
 
     Navigate to the bither-crowdsale root directory and add a '.secret' file with:
         touch .secret
@@ -46,6 +49,7 @@ Deployment to Main Net:
 Post deployment scripts, consider using the MultiSig UI provided by Gnosis instead of these scripts:
 
     Requires that the user copy the mnemonic that represents their account into the .secret file.
+    This account must be an owner of the MultiSig wallet.
 
     This is a multi-step process, each of the MultiSig owners must download and install this project as per the
     installation instructions above, then:

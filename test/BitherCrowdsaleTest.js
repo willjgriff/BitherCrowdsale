@@ -151,11 +151,6 @@ contract("BitherCrowdsale", accounts => {
             new PurchaseFor1EtherAfterDayTestCase("100", 34),
         ]
 
-        function PurchaseFor1EtherAfterDayTestCase(expectedTokens, afterDay) {
-            this.expectedTokens = expectedTokens
-            this.afterDay = afterDay
-        }
-
         purchaseFor1EtherAfterDayTestCases.forEach((testCase) => {
             it("purchases " + testCase.expectedTokens + " tokens for 1 ether after day " + testCase.afterDay.toString(), async () => {
                 const phaseOpeningTime = openingTime + time.duration.days(testCase.afterDay) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
@@ -174,11 +169,6 @@ contract("BitherCrowdsale", accounts => {
             new PurchaseFor1EtherBeforeDayTestCase("100", 41),
         ]
 
-        function PurchaseFor1EtherBeforeDayTestCase(expectedTokens, beforeDay) {
-            this.expectedTokens = expectedTokens
-            this.beforeDay = beforeDay
-        }
-
         purchaseFor1EtherBeforeDayTestCases.forEach((testCase) => {
             it("purchases " + testCase.expectedTokens + " tokens for 1 ether before the end of day " + testCase.beforeDay.toString(), async () => {
                 const phaseFinalTime = openingTime + time.duration.days(testCase.beforeDay) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
@@ -195,11 +185,6 @@ contract("BitherCrowdsale", accounts => {
             new PurchaseFor1500FinneyAtDayTestCase("150", 35),
         ]
 
-        function PurchaseFor1500FinneyAtDayTestCase(expectedTokens, atDay) {
-            this.expectedTokens = expectedTokens
-            this.atDay = atDay
-        }
-
         purchaseFor1500FinneyAtDayTestCases.forEach((testCase) => {
             it("purchases " + testCase.expectedTokens + " tokens for 1.5 ether at day " + testCase.atDay.toString(), async () => {
                 const expectedTokenBalance = new BN(testCase.expectedTokens + decimals) // The second part is what would come after the decimal point
@@ -208,29 +193,29 @@ contract("BitherCrowdsale", accounts => {
             })
         })
 
-        it("purchases 110 tokens for 1 ether before the end of the 2nd hour on the 14th day", async () => {
+        it("purchases 110 tokens for 1 ether before the end of day 14 and hour 2", async () => {
             const phaseFinalTime = openingTime + time.duration.days(13) + time.duration.hours(2) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
             await buyTokensAndAssertTokensPurchased('110', bitherToken, phaseFinalTime)
         })
 
-        it("purchases 106 tokens for 1 ether after 2nd hour on the 14th day", async () => {
+        it("purchases 106 tokens for 1 ether after day 14 and hour 2", async () => {
             const phaseOpeningTime = openingTime + time.duration.days(13) + time.duration.hours(2) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
             await buyTokensAndAssertTokensPurchased('106', bitherToken, phaseOpeningTime)
         })
 
-        it("purchases 163.5 tokens for 1.5 ether during 2nd phase", async () => {
+        it("purchases 163.5 tokens for 1.5 ether at day 2", async () => {
             const expectedTokenBalance = new BN('163' + '500000000000000000') // The second part is what would come after the decimal point
             const phaseTime = openingTime + time.duration.days(2)
             await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherToken, phaseTime)
         })
 
-        it("purchases 160.5 tokens for 1.5 ether during the 4th phase", async () => {
+        it("purchases 160.5 tokens for 1.5 ether at day 10", async () => {
             const expectedTokenBalance = new BN('160' + '500000000000000000') // The second part is what would come after the decimal point
             const phaseTime = openingTime + time.duration.days(10)
             await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherToken, phaseTime)
         })
 
-        it("purchases 165 tokens for 1.5 ether during the 5th phase", async () => {
+        it("purchases 165 tokens for 1.5 ether at day 13 and 1 hour", async () => {
             const expectedTokenBalance = new BN('165' + decimals)
             const phaseTime = openingTime + time.duration.days(13) + time.duration.hours(1)
             await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherToken, phaseTime)
@@ -239,152 +224,92 @@ contract("BitherCrowdsale", accounts => {
 
     describe("buyTokens(address beneficiary) BSK token tests", async () => {
 
-        it("purchases 70 tokens for 1 ether at start of sale", async () => {
-            const expectedTokenBalance = new BN('70' + decimals)
+        const purchaseFor1EtherAfterDayTestCases = [
+            new PurchaseFor1EtherAfterDayTestCase("70", 0),
+            new PurchaseFor1EtherAfterDayTestCase("66", 1),
+            new PurchaseFor1EtherAfterDayTestCase("64", 5),
+            new PurchaseFor1EtherAfterDayTestCase("62", 9),
+            new PurchaseFor1EtherAfterDayTestCase("60", 13),
+            new PurchaseFor1EtherAfterDayTestCase("57", 20),
+            new PurchaseFor1EtherAfterDayTestCase("54", 27),
+            new PurchaseFor1EtherAfterDayTestCase("50", 34),
+        ]
 
-            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: oneEtherWeiValue, from: tokenBenefactor})
-
-            const actualTokenBalance = await bitherStockToken.balanceOf(tokenBenefactor)
-            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
+        purchaseFor1EtherAfterDayTestCases.forEach((testCase) => {
+            it("purchases " + testCase.expectedTokens + " tokens for 1 ether after day " + testCase.afterDay.toString(), async () => {
+                const phaseOpeningTime = openingTime + time.duration.days(testCase.afterDay) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
+                await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherStockToken, phaseOpeningTime)
+            })
         })
 
-        it("purchases 68 tokens for 1 ether after 2nd hour", async () => {
+        const purchaseFor1EtherBeforeDayTestCases = [
+            new PurchaseFor1EtherBeforeDayTestCase("68", 1),
+            new PurchaseFor1EtherBeforeDayTestCase("66", 5),
+            new PurchaseFor1EtherBeforeDayTestCase("64", 9),
+            new PurchaseFor1EtherBeforeDayTestCase("62", 13),
+            new PurchaseFor1EtherBeforeDayTestCase("60", 20),
+            new PurchaseFor1EtherBeforeDayTestCase("57", 27),
+            new PurchaseFor1EtherBeforeDayTestCase("54", 34),
+            new PurchaseFor1EtherBeforeDayTestCase("50", 41),
+        ]
+
+        purchaseFor1EtherBeforeDayTestCases.forEach((testCase) => {
+            it("purchases " + testCase.expectedTokens + " tokens for 1 ether before the end of day " + testCase.beforeDay.toString(), async () => {
+                const phaseFinalTime = openingTime + time.duration.days(testCase.beforeDay) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
+                await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherStockToken, phaseFinalTime)
+            })
+        })
+
+        const purchaseFor1500FinneyAtDayTestCases = [
+            new PurchaseFor1500FinneyAtDayTestCase("105", 0),
+            new PurchaseFor1500FinneyAtDayTestCase("99", 2),
+            new PurchaseFor1500FinneyAtDayTestCase("96", 6),
+            new PurchaseFor1500FinneyAtDayTestCase("93", 10),
+            new PurchaseFor1500FinneyAtDayTestCase("90", 15),
+            new PurchaseFor1500FinneyAtDayTestCase("81", 28),
+            new PurchaseFor1500FinneyAtDayTestCase("75", 35),
+        ]
+
+        purchaseFor1500FinneyAtDayTestCases.forEach((testCase) => {
+            it("purchases " + testCase.expectedTokens + " tokens for 1.5 ether at day " + testCase.atDay.toString(), async () => {
+                const expectedTokenBalance = new BN(testCase.expectedTokens + decimals) // The second part is what would come after the decimal point
+                const phaseTime = openingTime + time.duration.days(testCase.atDay)
+                await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
+            })
+        })
+
+        it("purchases 68 tokens for 1 ether after hour 2", async () => {
             const phaseOpeningTime = openingTime + time.duration.hours(2) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
             await buyTokensAndAssertTokensPurchased('68', bitherStockToken, phaseOpeningTime)
         })
 
-        it("purchases 68 tokens for 1 ether before end of the 1st day", async () => {
-            const phaseEndingTime = openingTime + time.duration.days(1) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('68', bitherStockToken, phaseEndingTime)
-        })
-
-        it("purchases 66 tokens for 1 ether after 1st day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(1) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('66', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 66 tokens for 1 ether before the end of the 5th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(5) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('66', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 64 tokens for 1 ether after 5th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(5) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('64', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 64 tokens for 1 ether before the end of the 9th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(9) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('64', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 62 tokens for 1 ether after 9th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(9) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('62', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 62 tokens for 1 ether before the end of the 13th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(13) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('62', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 60 tokens for 1 ether after 13th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(13) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('60', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 60 tokens for 1 ether before the end of the 20th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(20) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('60', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 57 tokens for 1 ether after 20th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(20) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('57', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 57 tokens for 1 ether before the end of the 27th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(27) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('57', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 54 tokens for 1 ether after 27th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(27) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('54', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 54 tokens for 1 ether before the end of the 34th day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(34) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('54', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 50 tokens for 1 ether after 34th day", async () => {
-            const phaseOpeningTime = openingTime + time.duration.days(34) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('50', bitherStockToken, phaseOpeningTime)
-        })
-
-        it("purchases 50 tokens for 1 ether before the end of the 41st day", async () => {
-            const phaseFinalTime = openingTime + time.duration.days(41) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-            await buyTokensAndAssertTokensPurchased('50', bitherStockToken, phaseFinalTime)
-        })
-
-        it("purchases 105 tokens for 1.5 ether during 1st phase", async () => {
-            const expectedTokenBalance = new BN('105' + decimals)
-
-            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: fractionalEtherWeiValue, from: tokenBenefactor})
-
-            const actualTokenBalance = await bitherStockToken.balanceOf(tokenBenefactor)
-            assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
-        })
-
-        it("purchases 102 tokens for 1.5 ether during 2nd phase", async () => {
+        it("purchases 102 tokens for 1.5 ether at hour 2", async () => {
             const expectedTokenBalance = new BN('102' + decimals)
             const phaseTime = openingTime + time.duration.hours(2)
             await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
         })
 
-        it("purchases 99 tokens for 1.5 ether during the 3rd phase", async () => {
-            const expectedTokenBalance = new BN('99' + decimals)
-            const phaseTime = openingTime + time.duration.days(2)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
-
-        it("purchases 96 tokens for 1.5 ether during the 4th phase", async () => {
-            const expectedTokenBalance = new BN('96' + decimals)
-            const phaseTime = openingTime + time.duration.days(6)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
-
-        it("purchases 93 tokens for 1.5 ether during the 5th phase", async () => {
-            const expectedTokenBalance = new BN('93' + decimals)
-            const phaseTime = openingTime + time.duration.days(10)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
-
-        it("purchases 90 tokens for 1.5 ether during the 6th phase", async () => {
-            const expectedTokenBalance = new BN('90' + decimals)
-            const phaseTime = openingTime + time.duration.days(15)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
-
-        it("purchases 85.5 tokens for 1.5 ether during the 7th phase", async () => {
+        it("purchases 85.5 tokens for 1.5 ether at day 21", async () => {
             const expectedTokenBalance = new BN('85' + '500000000000000000')
             const phaseTime = openingTime + time.duration.days(21)
             await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
         })
-
-        it("purchases 81 tokens for 1.5 ether during the 8th phase", async () => {
-            const expectedTokenBalance = new BN('81' + decimals)
-            const phaseTime = openingTime + time.duration.days(28)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
-
-        it("purchases 75 tokens for 1.5 ether during the 9th phase", async () => {
-            const expectedTokenBalance = new BN('75' + decimals)
-            const phaseTime = openingTime + time.duration.days(35)
-            await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        })
     })
+
+    function PurchaseFor1EtherAfterDayTestCase(expectedTokens, afterDay) {
+        this.expectedTokens = expectedTokens
+        this.afterDay = afterDay
+    }
+
+    function PurchaseFor1EtherBeforeDayTestCase(expectedTokens, beforeDay) {
+        this.expectedTokens = expectedTokens
+        this.beforeDay = beforeDay
+    }
+
+    function PurchaseFor1500FinneyAtDayTestCase(expectedTokens, atDay) {
+        this.expectedTokens = expectedTokens
+        this.atDay = atDay
+    }
 
     async function buyTokensAndAssertTokensPurchased(expectedTokenBalanceString, tokenContract, atTime) {
         const expectedTokenBalance = new BN(expectedTokenBalanceString + decimals)
