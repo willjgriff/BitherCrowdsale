@@ -6,7 +6,7 @@ const BTR_CROWDSALE_ALLOWANCE = '33000000' // Should be a string to conform to B
 const BSK_CROWDSALE_ALLOWANCE = '21000000' // Should be a string to conform to BN format
 const MULTISIG_CONFIRMATIONS = 2
 const MULTISIG_OWNERS = "" // Should a be a list of addresses eg ["0xaBcD...", "0xaBcD...", "0xaBcD...", "0xaBcD..."]
-const CROWDSALE_OPENING_TIME = 1542906507 // Thursday, 22 November 2018 17:08:27, can get from here: https://www.epochconverter.com/
+const CROWDSALE_OPENING_TIME = 1574505475 // Saturday, 23 November 2019 10:37:55, can get from here: https://www.epochconverter.com/
 
 /**
  * Once the contracts have been deployed, the constants below must be set for the MultiSig owner that submits the approval transaction.
