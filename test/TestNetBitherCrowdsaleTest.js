@@ -52,18 +52,18 @@
 //         await bitherStockToken.approve(bitherCrowdsale.address, bskCowdsaleTokens, { from: bitherTokensOwner })
 //     }
 //
-//     describe("constructor()", async () => {
+//     describe("constructor()", () => {
 //
 //         it("costs less than 2000000 gas", async () => {
-//             maxGasCost = 2000000
-//             deploymentReceipt = await web3.eth.getTransactionReceipt(bitherCrowdsale.transactionHash)
-//             deploymentCost = deploymentReceipt.gasUsed
+//             const maxGasCost = 2000000
+//             const deploymentReceipt = await web3.eth.getTransactionReceipt(bitherCrowdsale.transactionHash)
+//             const deploymentCost = deploymentReceipt.gasUsed
 //
 //             assert.isBelow(deploymentCost, maxGasCost)
 //         })
 //     })
 //
-//     describe("buyTokens(address beneficiary) misc tests", async () => {
+//     describe("buyTokens(address beneficiary) misc tests", () => {
 //
 //         it("costs less than 200000 gas", async () => {
 //             const maxGasCost = 200000
@@ -78,8 +78,8 @@
 //             const etherBenefactorBalance = await web3.eth.getBalance(etherBenefactor)
 //             const expectedEtherBalance = new BN(etherBenefactorBalance).add(new BN(smallEtherWeiValue))
 //
-//             transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
-//             console.log("BuyTokens() Transaction hash: " + transaction.tx)
+//             const transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
+//             console.log("   BuyTokens() Transaction hash: " + transaction.tx)
 //
 //             const actualEtherBalance = await web3.eth.getBalance(etherBenefactor)
 //             assert.equal(actualEtherBalance, expectedEtherBalance)
@@ -95,13 +95,13 @@
 //
 //     })
 //
-//     describe("buyTokens(address beneficiary) BTR token tests", async () => {
+//     describe("buyTokens(address beneficiary) BTR token tests", () => {
 //
 //         it("purchases 11 tokens for 0.1 ether at start of sale", async () => {
 //             const expectedTokenBalance = new BN('11' + decimals)
 //
-//             transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
-//             console.log("BuyTokens() Transaction hash: " + transaction.tx)
+//             const transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
+//             console.log("   BuyTokens() Transaction hash: " + transaction.tx)
 //
 //             const actualTokenBalance = await bitherToken.balanceOf(tokenBenefactor)
 //             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
@@ -109,13 +109,13 @@
 //
 //     })
 //
-//     describe("buyTokens(address beneficiary) BSK token tests", async () => {
+//     describe("buyTokens(address beneficiary) BSK token tests", () => {
 //
 //         it("purchases 7 tokens for 0.1 ether at start of sale", async () => {
 //             const expectedTokenBalance = new BN('7' + decimals)
 //
-//             transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
-//             console.log("BuyTokens() Transaction hash: " + transaction.tx)
+//             const transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
+//             console.log("   BuyTokens() Transaction hash: " + transaction.tx)
 //
 //             const actualTokenBalance = await bitherStockToken.balanceOf(tokenBenefactor)
 //             assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())
