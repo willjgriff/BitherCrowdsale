@@ -12,7 +12,7 @@ contract("MultiSig Crowdsale Integration", accounts => {
     const bitherTokensOwner = accounts[3]
     const multiSigOwners = [accounts[0], accounts[1], accounts[2]]
     const requiredConfirmations = 2
-    let openingTime
+    let preSaleOpeningTime, crowdsaleOpeningTime, privateSaleClosingTime
     const decimals = '000000000000000000'
     const btrCrowdsaleTokens = new BN('33000000' + decimals) // tokens available * (10 ** 18) number of decimals in BTR token
     const bskCrowdsaleTokens = new BN('21000000' + decimals) // tokens available * (10 ** 18) number of decimals in BSK token
@@ -23,7 +23,7 @@ contract("MultiSig Crowdsale Integration", accounts => {
         await transferTokensToMultiSig()
         await deployBitherCrowdsale()
         await approveTokensForCrowdsaleAddress()
-        await testUtils.increaseBlockTimeTo(openingTime) // Note that this can be inaccurate sometimes.
+        await testUtils.increaseBlockTimeTo(preSaleOpeningTime) // Note that this can be inaccurate sometimes.
     })
 
     async function deployBitherTokens() {
@@ -43,9 +43,12 @@ contract("MultiSig Crowdsale Integration", accounts => {
     }
 
     async function deployBitherCrowdsale() {
-        openingTime = (await time.latest()) + time.duration.days(1)
+        preSaleOpeningTime = (await time.latest()) + time.duration.weeks(8)
+        crowdsaleOpeningTime = preSaleOpeningTime + time.duration.weeks(3)
+        privateSaleClosingTime = preSaleOpeningTime - time.duration.days(2)
+
         bitherCrowdsale = await BitherCrowdsale.new(bitherToken.address, bitherStockToken.address,
-            multiSigWallet.address, multiSigWallet.address, openingTime)
+            multiSigWallet.address, multiSigWallet.address, preSaleOpeningTime)
     }
 
     async function approveTokensForCrowdsaleAddress() {

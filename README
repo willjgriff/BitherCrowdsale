@@ -50,6 +50,7 @@ Post deployment scripts, consider using the MultiSig UI provided by Gnosis inste
 
     Requires that the user copy the mnemonic that represents their account into the .secret file.
     This account must be an owner of the MultiSig wallet.
+    These commands can take a while so wait after executing them.
 
     This is a multi-step process, each of the MultiSig owners must download and install this project as per the
     installation instructions above, then:

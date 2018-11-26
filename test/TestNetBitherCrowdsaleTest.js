@@ -20,7 +20,7 @@
 //     const bitherTokensOwner = accounts[0]
 //     const tokenBenefactor = accounts[1]
 //     const etherBenefactor = accounts[2]
-//     const smallEtherWeiValue = web3.utils.toWei('0.01', 'ether')
+//     const smallEtherWeiValue = web3.utils.toWei('0.1', 'ether')
 //     const decimals = '000000000000000000' // 10 ** 18 decimals is the standard for ERC20 tokens, necessary as Solidity cannot handle fractional numbers.
 //     const btrCowdsaleTokens = new BN('33000000' + decimals) // tokens available * (10 ** 18) number of decimals in BTR token
 //     const bskCowdsaleTokens = new BN('21000000' + decimals) // tokens available * (10 ** 18) number of decimals in BSK token
@@ -29,7 +29,7 @@
 //         await deployBitherTokens()
 //         await deployBitherCrowdsale()
 //         await approveTokensForCrowdsaleAddress()
-//         await testUtils.sleepUntil(openingTime + time.duration.seconds(30)) // Wait until the Crowdsale start time + plus some block offset time before attempting tests.
+//         await testUtils.sleepUntil(openingTime + time.duration.seconds(30)) // Wait until the Crowdsale start time plus some block offset time before attempting tests.
 //         // Block offset time is necessary as block times can be 0 to 30 seconds out of the actual current time.
 //
 //         console.log("JS time: " + testUtils.currentEpoch() + " Current block time: " + await time.latest() + " Crowdsale opening time: " + openingTime)
@@ -65,8 +65,6 @@
 //
 //     describe("buyTokens(address beneficiary) misc tests", async () => {
 //
-//         // TEST FOR REVERTS BEFORE START OF SALE.
-//
 //         it("costs less than 200000 gas", async () => {
 //             const maxGasCost = 200000
 //
@@ -99,8 +97,8 @@
 //
 //     describe("buyTokens(address beneficiary) BTR token tests", async () => {
 //
-//         it("purchases 1.1 tokens for 0.01 ether at start of sale", async () => {
-//             const expectedTokenBalance = new BN('1' + '100000000000000000') // The second part is what would come after the decimal point
+//         it("purchases 11 tokens for 0.1 ether at start of sale", async () => {
+//             const expectedTokenBalance = new BN('11' + decimals)
 //
 //             transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
 //             console.log("BuyTokens() Transaction hash: " + transaction.tx)
@@ -113,8 +111,8 @@
 //
 //     describe("buyTokens(address beneficiary) BSK token tests", async () => {
 //
-//         it("purchases 0.7 tokens for 0.01 ether at start of sale", async () => {
-//             const expectedTokenBalance = new BN('' + '700000000000000000') // The second part is what would come after the decimal point
+//         it("purchases 7 tokens for 0.1 ether at start of sale", async () => {
+//             const expectedTokenBalance = new BN('7' + decimals)
 //
 //             transaction = await bitherCrowdsale.buyTokens(tokenBenefactor, { value: smallEtherWeiValue, from: tokenBenefactor })
 //             console.log("BuyTokens() Transaction hash: " + transaction.tx)

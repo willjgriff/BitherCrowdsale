@@ -1,14 +1,13 @@
 pragma solidity ^0.4.25;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
-contract BitherStockToken is ERC20 {
+contract BitherStockToken is ERC20, ERC20Detailed {
 
-    string public name = "BitherStockToken";
-    string public symbol = "BSK";
-    uint256 public decimals = 18;
+    uint256 constant private TOTAL_BITHER_STOCK_TOKENS = 100000000;
 
-    constructor() public {
-        _mint(msg.sender, 100000000 * (10 ** decimals));
+    constructor() ERC20Detailed("BitherStockToken", "BSK", 18) public {
+        _mint(msg.sender, TOTAL_BITHER_STOCK_TOKENS * (10 ** 18));
     }
 }

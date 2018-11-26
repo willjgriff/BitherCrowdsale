@@ -6,7 +6,7 @@ const BTR_CROWDSALE_ALLOWANCE = '33000000' // Should be a string to conform to B
 const BSK_CROWDSALE_ALLOWANCE = '21000000' // Should be a string to conform to BN format
 const MULTISIG_CONFIRMATIONS = 2
 const MULTISIG_OWNERS = "" // Should a be a list of addresses eg ["0xaBcD...", "0xaBcD...", "0xaBcD...", "0xaBcD..."]
-const CROWDSALE_OPENING_TIME = 1574505475 // Saturday, 23 November 2019 10:37:55, can get from here: https://www.epochconverter.com/
+const PRESALE_OPENING_TIME = 1548511200 // Saturday, 26 January 2019 14:00:00, can get from here: https://www.epochconverter.com/
 
 /**
  * Once the contracts have been deployed, the constants below must be set for the MultiSig owner that submits the approval transaction.
@@ -31,7 +31,7 @@ module.exports = {
     BSK_CROWDSALE_ALLOWANCE,
     MULTISIG_CONFIRMATIONS,
     MULTISIG_OWNERS,
-    CROWDSALE_OPENING_TIME,
+    PRESALE_OPENING_TIME,
 
     BITHER_TOKEN_ADDRESS,
     BITHER_STOCK_TOKEN_ADDRESS,

@@ -37,8 +37,9 @@ contract("BitherCrowdsale", accounts => {
         preSaleOpeningTime = (await time.latest()) + time.duration.weeks(8)
         crowdsaleOpeningTime = preSaleOpeningTime + time.duration.weeks(3)
         privateSaleClosingTime = preSaleOpeningTime - time.duration.days(2)
+
         bitherCrowdsale = await BitherCrowdsale.new(bitherToken.address, bitherStockToken.address,
-            bitherTokensOwner, etherBenefactor, preSaleOpeningTime, crowdsaleOpeningTime)
+            bitherTokensOwner, etherBenefactor, preSaleOpeningTime)
     }
 
     async function approveTokensForCrowdsaleAddress() {
@@ -46,10 +47,10 @@ contract("BitherCrowdsale", accounts => {
         await bitherStockToken.approve(bitherCrowdsale.address, bskCrowdsaleTokens, {from: bitherTokensOwner})
     }
 
-    describe("constructor()", async () => {
+    describe("constructor()", () => {
 
-        it("costs less than 2500000 gas", async () => {
-            maxGasCost = 2500000
+        it("costs less than 2000000 gas", async () => {
+            maxGasCost = 2000000
             deploymentReceipt = await web3.eth.getTransactionReceipt(bitherCrowdsale.transactionHash)
             deploymentCost = deploymentReceipt.gasUsed
 
@@ -57,7 +58,7 @@ contract("BitherCrowdsale", accounts => {
         })
     })
 
-    describe("buyTokens(address beneficiary) misc tests", async () => {
+    describe("buyTokens(address beneficiary) misc tests", () => {
 
         it("costs less than 200000 gas", async () => {
             const maxGasCost = 200000
@@ -89,16 +90,6 @@ contract("BitherCrowdsale", accounts => {
                 {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
-        it("reverts before the crowdsale has started", async () => {
-            await deployBitherCrowdsale()
-            await approveTokensForCrowdsaleAddress()
-            const timeBeforeOpening = preSaleOpeningTime - time.duration.seconds(3)
-            await testUtils.increaseBlockTimeTo(timeBeforeOpening)
-
-            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                {value: oneEtherWeiValue, from: tokenBenefactor}))
-        })
-
         // The following 3 tests require ganache-cli to be run with '-e [account balance]' where account balance is a high amount of ether.
         it("reverts when cap of 300000 ether is reached", async () => {
             const largeEtherWeiValue = web3.utils.toWei('300000', 'ether')
@@ -118,26 +109,16 @@ contract("BitherCrowdsale", accounts => {
                 {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
-        // it("has no allowance of tokens when cap of 300000 ether is reached", async () => {
-        //
-        //     remainingBtr = await bitherCrowdsale.remainingTokens()
-        //     remainingBsk = await bitherStockToken.allowance(bitherTokensOwner, bitherCrowdsale.address)
-        //
-        //     console.log(remainingBtr.toString())
-        //     console.log(remainingBsk.toString())
-        //
-        //     const largeEtherWeiValue = web3.utils.toWei('300000', 'ether')
-        //     await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
-        //
-        //     remainingBtr = await bitherCrowdsale.remainingTokens()
-        //     remainingBsk = await bitherStockToken.allowance(bitherTokensOwner, bitherCrowdsale.address)
-        //
-        //     console.log(remainingBtr.toString())
-        //     console.log(remainingBsk.toString())
-        //
-        //     assert.equal(remainingBtr, 0)
-        //     assert.equal(remainingBsk, 0)
-        // })
+        it("has no allowance of tokens when cap of 300000 ether is reached", async () => {
+            const largeEtherWeiValue = web3.utils.toWei('300000', 'ether')
+            await bitherCrowdsale.buyTokens(tokenBenefactor, {value: largeEtherWeiValue, from: tokenBenefactor})
+
+            const remainingBtr = await bitherCrowdsale.remainingTokens()
+            const remainingBsk = await bitherStockToken.allowance(bitherTokensOwner, bitherCrowdsale.address)
+
+            assert.equal(remainingBtr, 0)
+            assert.equal(remainingBsk, 0)
+        })
 
         it("reverts when allowance of tokens has been revoked", async () => {
             await bitherToken.approve(bitherCrowdsale.address, 0)
@@ -154,86 +135,124 @@ contract("BitherCrowdsale", accounts => {
                 {value: lessThanOneEth, from: tokenBenefactor}))
         })
 
-        it("reverts when contributing less than 69 ether during private sale period", async () => {
+        it("reverts when contributing less than 69 ether at start of private sale period", async () => {
             await deployBitherCrowdsale()
             await approveTokensForCrowdsaleAddress()
-            const lessThanSixtyNineEth = web3.utils.toWei('68', 'ether')
+            const largeEthValue = web3.utils.toWei('68', 'ether')
 
             await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
-                {value: lessThanSixtyNineEth, from: tokenBenefactor}))
+                {value: largeEthValue, from: tokenBenefactor}))
+        })
+
+        it("reverts when contributing less than 69 ether at end of private sale period", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            await testUtils.increaseBlockTimeTo(privateSaleClosingTime - time.duration.seconds(2))
+            const largeEthValue = web3.utils.toWei('68', 'ether')
+
+            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
+                {value: largeEthValue, from: tokenBenefactor}))
+        })
+
+        it("reverts after private sale closing time", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            await testUtils.increaseBlockTimeTo(privateSaleClosingTime + time.duration.seconds(2))
+            const largeEtherValue = web3.utils.toWei("69", "ether")
+            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
+                {value: largeEtherValue, from: tokenBenefactor}))
+        })
+
+        it("reverts before presale opening time", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            await testUtils.increaseBlockTimeTo(preSaleOpeningTime - time.duration.seconds(2))
+            const largeEtherValue = web3.utils.toWei("69", "ether")
+            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
+                {value: largeEtherValue, from: tokenBenefactor}))
+        })
+
+        it("reverts after presale closing time", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            await testUtils.increaseBlockTimeTo(crowdsaleOpeningTime - time.duration.days(2) + time.duration.seconds(2))
+            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
+        })
+
+        it("reverts before crowdsale opening time", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            const timeBeforeOpening = preSaleOpeningTime - time.duration.seconds(3)
+            await testUtils.increaseBlockTimeTo(timeBeforeOpening)
+
+            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor,
+                {value: oneEtherWeiValue, from: tokenBenefactor}))
         })
 
     })
 
-    describe("buyTokens(address beneficiary) BTR token tests", async () => {
-
-        const startOfDay = (day) => time.duration.days(day) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-        const beforeEndOfDay = (day) => time.duration.days(day) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
+    describe("send() BTR token tests", () => {
 
         const purchaseForEtherAtTimeTestCases = [
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "110", 0, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "109", 1, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "108", 5, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "107", 9, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "110", 21, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "104", 28, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "102", 35, startOfDay, "at start of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "100", 42, startOfDay, "at start of"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "110", 0, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "109", 1, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "108", 5, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "107", 9, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "110", 21, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "104", 28, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "102", 35, StartOfDay, "at start of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "100", 42, StartOfDay, "at start of", "Bither Tokens"),
 
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "109", 5, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "108", 9, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "107", 13, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "106", 28, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "104", 35, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "102", 42, beforeEndOfDay, "before end of"),
-            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "100", 49, beforeEndOfDay, "before end of"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "110", 1, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "109", 5, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "108", 9, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "107", 13, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "106", 28, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "104", 35, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "102", 42, BeforeEndOfDay, "before end of", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "100", 49, BeforeEndOfDay, "before end of", "Bither Tokens"),
 
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "165", 0, startOfDay, "at"),
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "162", 6, startOfDay, "at"),
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "159", 22, startOfDay, "at"),
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "156", 29, startOfDay, "at"),
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "153", 36, startOfDay, "at"),
-            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "150", 42, startOfDay, "at"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "165", 0, StartOfDay, "at", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "162", 6, StartOfDay, "at", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "159", 22, StartOfDay, "at", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "156", 29, StartOfDay, "at", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "153", 36, StartOfDay, "at", "Bither Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "150", 43, StartOfDay, "at", "Bither Tokens"),
         ]
 
         purchaseForEtherAtTimeTestCases.forEach((testCase) => {
-            const ethValue = web3.utils.fromWei(testCase.ethPayment, 'ether')
-            it("purchases " + testCase.expectedTokens + " tokens for " + ethValue.toString() +
-                " ether " + testCase.description + " day " + testCase.timeInCrowdsale.toString(), async () => {
-                const atDay = preSaleOpeningTime + testCase.timeFunction(testCase.timeInCrowdsale)
-                const expectedTokenBalance = new BN(testCase.expectedTokens + decimals)
-                await buyTokensAndAssertTokensPurchased(expectedTokenBalance, testCase.ethPayment, bitherToken, atDay)
-            })
+            PurchaseForEtherAtTimeTest(testCase)
         })
 
         it("purchases 110 tokens for 1 ether before end of day 21 and hour 2", async () => {
             const phaseFinalTime = preSaleOpeningTime + time.duration.days(21) + time.duration.hours(2) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
             const expectedTokenBalance = new BN('110' + decimals)
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherToken, phaseFinalTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherToken, phaseFinalTime)
         })
 
         it("purchases 106 tokens for 1 ether after day 21 and hour 2", async () => {
             const phaseOpeningTime = preSaleOpeningTime + time.duration.days(21) + time.duration.hours(2) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
             const expectedTokenBalance = new BN('106' + decimals)
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherToken, phaseOpeningTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherToken, phaseOpeningTime)
         })
 
         it("purchases 163.5 tokens for 1.5 ether at day 2", async () => {
             const expectedTokenBalance = new BN('163' + '500000000000000000') // The second part is what would come after the decimal point
             const phaseTime = preSaleOpeningTime + time.duration.days(2)
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
         })
 
         it("purchases 160.5 tokens for 1.5 ether at day 10", async () => {
             const expectedTokenBalance = new BN('160' + '500000000000000000') // The second part is what would come after the decimal point
             const phaseTime = preSaleOpeningTime + time.duration.days(10)
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
         })
 
         it("purchases 165 tokens for 1.5 ether at day 21 and 1 hour", async () => {
             const expectedTokenBalance = new BN('165' + decimals)
             const phaseTime = preSaleOpeningTime + time.duration.days(21) + time.duration.hours(1)
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherToken, phaseTime)
         })
 
         it("purchases 7590 tokens for 69 ether after deployment", async () => {
@@ -242,7 +261,7 @@ contract("BitherCrowdsale", accounts => {
             const expectedTokenBalance = new BN('7590' + decimals)
             const phaseTime = await time.latest()
             const largeEtherWeiValue = web3.utils.toWei("69", "ether")
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherToken, phaseTime)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherToken, phaseTime)
         })
 
         it("purchases 7590 tokens for 69 ether before private sale closing time", async () => {
@@ -251,124 +270,115 @@ contract("BitherCrowdsale", accounts => {
             const expectedTokenBalance = new BN('7590' + decimals)
             const phaseTime = privateSaleClosingTime - time.duration.seconds(2)
             const largeEtherWeiValue = web3.utils.toWei("69", "ether")
-            await buyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherToken, phaseTime)
-        })
-
-        it("reverts after private sale closing time", async () => {
-            await deployBitherCrowdsale()
-            await approveTokensForCrowdsaleAddress()
-            await testUtils.increaseBlockTimeTo(privateSaleClosingTime + time.duration.seconds(2))
-            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor, {from: tokenBenefactor}))
-        })
-
-        it("reverts before presale opening time", async () => {
-            await deployBitherCrowdsale()
-            await approveTokensForCrowdsaleAddress()
-            await testUtils.increaseBlockTimeTo(preSaleOpeningTime - time.duration.seconds(2))
-            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor, {from: tokenBenefactor}))
-        })
-
-        it("reverts after presale closing time", async () => {
-            await deployBitherCrowdsale()
-            await approveTokensForCrowdsaleAddress()
-            await testUtils.increaseBlockTimeTo(crowdsaleOpeningTime - time.duration.days(2) + time.duration.seconds(2))
-            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor, {from: tokenBenefactor}))
-        })
-
-        it("reverts before crowdsale opening time", async () => {
-            await deployBitherCrowdsale()
-            await approveTokensForCrowdsaleAddress()
-            await testUtils.increaseBlockTimeTo(crowdsaleOpeningTime - time.duration.seconds(2))
-            await shouldFail.reverting(bitherCrowdsale.buyTokens(tokenBenefactor, {from: tokenBenefactor}))
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherToken, phaseTime)
         })
     })
 
-    describe("buyTokens(address beneficiary) BSK token tests", async () => {
+    describe("send() BSK token tests", () => {
 
-        // const purchaseFor1EtherAfterDayTestCases = [
-        //     new PurchaseFor1EtherAfterDayTestCase("70", 0),
-        //     new PurchaseFor1EtherAfterDayTestCase("66", 1),
-        //     new PurchaseFor1EtherAfterDayTestCase("64", 5),
-        //     new PurchaseFor1EtherAfterDayTestCase("62", 9),
-        //     new PurchaseFor1EtherAfterDayTestCase("60", 13),
-        //     new PurchaseFor1EtherAfterDayTestCase("57", 20),
-        //     new PurchaseFor1EtherAfterDayTestCase("54", 27),
-        //     new PurchaseFor1EtherAfterDayTestCase("50", 34),
-        // ]
-        //
-        // purchaseFor1EtherAfterDayTestCases.forEach((testCase) => {
-        //     it("purchases " + testCase.expectedTokens + " tokens for 1 ether after day " + testCase.timeInCrowdsale.toString(), async () => {
-        //         const phaseOpeningTime = openingTime + time.duration.days(testCase.timeInCrowdsale) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-        //         await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherStockToken, phaseOpeningTime)
-        //     })
-        // })
-        //
-        // const purchaseFor1EtherBeforeDayTestCases = [
-        //     new PurchaseFor1EtherBeforeDayTestCase("68", 1),
-        //     new PurchaseFor1EtherBeforeDayTestCase("66", 5),
-        //     new PurchaseFor1EtherBeforeDayTestCase("64", 9),
-        //     new PurchaseFor1EtherBeforeDayTestCase("62", 13),
-        //     new PurchaseFor1EtherBeforeDayTestCase("60", 20),
-        //     new PurchaseFor1EtherBeforeDayTestCase("57", 27),
-        //     new PurchaseFor1EtherBeforeDayTestCase("54", 34),
-        //     new PurchaseFor1EtherBeforeDayTestCase("50", 41),
-        // ]
-        //
-        // purchaseFor1EtherBeforeDayTestCases.forEach((testCase) => {
-        //     it("purchases " + testCase.expectedTokens + " tokens for 1 ether before the end of day " + testCase.beforeDay.toString(), async () => {
-        //         const phaseFinalTime = openingTime + time.duration.days(testCase.beforeDay) - time.duration.seconds(2) // -2 seconds to account for variance when increasing the block time
-        //         await buyTokensAndAssertTokensPurchased(testCase.expectedTokens, bitherStockToken, phaseFinalTime)
-        //     })
-        // })
-        //
-        // const purchaseFor1500FinneyAtDayTestCases = [
-        //     new PurchaseFor1500FinneyAtDayTestCase("105", 0),
-        //     new PurchaseFor1500FinneyAtDayTestCase("99", 2),
-        //     new PurchaseFor1500FinneyAtDayTestCase("96", 6),
-        //     new PurchaseFor1500FinneyAtDayTestCase("93", 10),
-        //     new PurchaseFor1500FinneyAtDayTestCase("90", 15),
-        //     new PurchaseFor1500FinneyAtDayTestCase("81", 28),
-        //     new PurchaseFor1500FinneyAtDayTestCase("75", 35),
-        // ]
-        //
-        // purchaseFor1500FinneyAtDayTestCases.forEach((testCase) => {
-        //     it("purchases " + testCase.expectedTokens + " tokens for 1.5 ether at day " + testCase.atDay.toString(), async () => {
-        //         const expectedTokenBalance = new BN(testCase.expectedTokens + decimals) // The second part is what would come after the decimal point
-        //         const phaseTime = openingTime + time.duration.days(testCase.atDay)
-        //         await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        //     })
-        // })
-        //
-        // it("purchases 68 tokens for 1 ether after hour 2", async () => {
-        //     const phaseOpeningTime = openingTime + time.duration.hours(2) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
-        //     await buyTokensAndAssertTokensPurchased('68', bitherStockToken, phaseOpeningTime)
-        // })
-        //
-        // it("purchases 102 tokens for 1.5 ether at hour 2", async () => {
-        //     const expectedTokenBalance = new BN('102' + decimals)
-        //     const phaseTime = openingTime + time.duration.hours(2)
-        //     await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        // })
-        //
-        // it("purchases 85.5 tokens for 1.5 ether at day 21", async () => {
-        //     const expectedTokenBalance = new BN('85' + '500000000000000000')
-        //     const phaseTime = openingTime + time.duration.days(21)
-        //     await buyFractionalTokensAndAssertTokensPurchased(expectedTokenBalance, bitherStockToken, phaseTime)
-        // })
+        const purchaseForEtherAtTimeTestCases = [
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "70", 0, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "66", 1, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "64", 5, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "62", 9, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "60", 21, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "57", 28, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "54", 35, StartOfDay, "at start of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "50", 42, StartOfDay, "at start of", "Bither Stock Tokens"),
+
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "68", 1, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "66", 5, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "64", 9, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "62", 13, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "60", 28, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "57", 35, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "54", 42, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(oneEtherWeiValue, "50", 49, BeforeEndOfDay, "before end of", "Bither Stock Tokens"),
+
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "105", 0, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "99", 2, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "96", 6, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "93", 10, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "90", 22, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "81", 36, StartOfDay, "at", "Bither Stock Tokens"),
+            new PurchaseForEtherAtTimeTestCase(fractionalEtherWeiValue, "75", 43, StartOfDay, "at", "Bither Stock Tokens"),
+        ]
+
+        purchaseForEtherAtTimeTestCases.forEach((testCase) => {
+            PurchaseForEtherAtTimeTest(testCase)
+        })
+
+        it("purchases 70 tokens for 1 ether before hour 2", async () => {
+            const phaseOpeningTime = preSaleOpeningTime + time.duration.hours(2) - time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
+            const expectedTokenBalance = new BN('70' + decimals) // The second part is what would come after the decimal point
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherStockToken, phaseOpeningTime)
+        })
+
+        it("purchases 68 tokens for 1 ether after hour 2", async () => {
+            const phaseOpeningTime = preSaleOpeningTime + time.duration.hours(2) + time.duration.seconds(2) // +2 seconds to account for variance when increasing the block time
+            const expectedTokenBalance = new BN('68' + decimals) // The second part is what would come after the decimal point
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, oneEtherWeiValue, bitherStockToken, phaseOpeningTime)
+        })
+
+        it("purchases 102 tokens for 1.5 ether at hour 2", async () => {
+            const expectedTokenBalance = new BN('102' + decimals)
+            const phaseTime = preSaleOpeningTime + time.duration.hours(2)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherStockToken, phaseTime)
+        })
+
+        it("purchases 85.5 tokens for 1.5 ether at day 29", async () => {
+            const expectedTokenBalance = new BN('85' + '500000000000000000')
+            const phaseTime = preSaleOpeningTime + time.duration.days(29)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, fractionalEtherWeiValue, bitherStockToken, phaseTime)
+        })
+
+        it("purchases 4830 tokens for 69 ether after deployment", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            const expectedTokenBalance = new BN('4830' + decimals)
+            const phaseTime = await time.latest()
+            const largeEtherWeiValue = web3.utils.toWei("69", "ether")
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherStockToken, phaseTime)
+        })
+
+        it("purchases 4830 tokens for 69 ether before private sale closing time", async () => {
+            await deployBitherCrowdsale()
+            await approveTokensForCrowdsaleAddress()
+            const expectedTokenBalance = new BN('4830' + decimals)
+            const phaseTime = privateSaleClosingTime - time.duration.seconds(2)
+            const largeEtherWeiValue = web3.utils.toWei("69", "ether")
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, largeEtherWeiValue, bitherStockToken, phaseTime)
+        })
     })
 
-    function PurchaseForEtherAtTimeTestCase(ethPayment, expectedTokens, timeInCrowdsale, timeFunction, description) {
+    function StartOfDay(day) { return time.duration.days(day) + time.duration.seconds(2) } // +2 seconds to account for variance when increasing the block time
+    function BeforeEndOfDay(day) { return time.duration.days(day) - time.duration.seconds(2) } // -2 seconds to account for variance when increasing the block time
+
+    function PurchaseForEtherAtTimeTestCase(ethPayment, expectedTokens, timeInCrowdsale, timeFunction, description, token) {
         this.ethPayment = ethPayment
         this.expectedTokens = expectedTokens
         this.timeInCrowdsale = timeInCrowdsale
         this.timeFunction = timeFunction
         this.description = description
+        this.token = token
     }
 
-    async function buyTokensAndAssertTokensPurchased(expectedTokenBalance, ethPayment, tokenContract, atTime) {
-        await testUtils.increaseBlockTimeTo(atTime)
+    function PurchaseForEtherAtTimeTest(testCase) {
+        const ethValue = web3.utils.fromWei(testCase.ethPayment, 'ether')
 
-        await bitherCrowdsale.buyTokens(tokenBenefactor, {value: ethPayment, from: tokenBenefactor})
+        it("purchases " + testCase.expectedTokens + " " + testCase.token + " for " + ethValue.toString() +
+            " ether " + testCase.description + " day " + testCase.timeInCrowdsale.toString(), async () => {
+
+            const token = testCase.token === "Bither Tokens" ? bitherToken : bitherStockToken
+            const atDay = preSaleOpeningTime + testCase.timeFunction(testCase.timeInCrowdsale)
+            const expectedTokenBalance = new BN(testCase.expectedTokens + decimals)
+            await BuyTokensAndAssertTokensPurchased(expectedTokenBalance, testCase.ethPayment, token, atDay)
+        })
+    }
+
+    async function BuyTokensAndAssertTokensPurchased(expectedTokenBalance, ethPayment, tokenContract, atTime) {
+        await testUtils.increaseBlockTimeTo(atTime)
+        await bitherCrowdsale.send(ethPayment, {from: tokenBenefactor})
 
         const actualTokenBalance = await tokenContract.balanceOf(tokenBenefactor)
         assert.equal(actualTokenBalance.toString(), expectedTokenBalance.toString())

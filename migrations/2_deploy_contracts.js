@@ -50,7 +50,7 @@ module.exports = async (deployer, network, accounts) => {
 
     async function deployBitherCrowdsale() {
         await deployer.deploy(BitherCrowdsale, BitherToken.address, BitherStockToken.address,
-            MultiSigWallet.address, MultiSigWallet.address, config.CROWDSALE_OPENING_TIME)
+            MultiSigWallet.address, MultiSigWallet.address, config.PRESALE_OPENING_TIME)
         bitherCrowdsale = await BitherCrowdsale.at(BitherCrowdsale.address)
     }
 
