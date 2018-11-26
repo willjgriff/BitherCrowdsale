@@ -18,29 +18,28 @@ import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol
 contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale {
 
     uint256 private capInWei = 300000 ether;
-    uint256 private crowdsaleLength = 41 days;
+    uint256 private _privateSaleClosingTime = 1548338400; // Thursday, 24 January 2019 14:00:00
+    uint256 private _preSaleOpeningTime = 1548511200; // Saturday, 26 January 2019 14:00:00
+    uint256 private _crowdsaleOpeningTime = 1550325600; // Saturday, 16 February 2019 14:00:00
+    uint256 private _crowdsaleClosingTime = 1552744800; // Saturday, 16 March 2019 14:00:00
 
-    // BTR Presale Rates
-    uint256 private btrRateDay1 = 110;
-    uint256 private btrRateDay2to5 = 109;
-    uint256 private btrRateDay6to9 = 108;
-    uint256 private btrRateDay10to13 = 107;
+    uint256 private btrPrivateSaleRate = 110;
+    uint256 private btrPresaleRateDay1 = 110;
+    uint256 private btrPresaleRateDay2to5 = 109;
+    uint256 private btrPresaleRateDay6to9 = 108;
+    uint256 private btrPresaleRateDay10to13 = 107;
+    uint256 private btrCrowdsaleRateDay1First2Hours = 110;
+    uint256 private btrCrowdsaleRateDay1to7 = 106;
+    uint256 private btrCrowdsaleRateDay8to14 = 104;
+    uint256 private btrCrowdsaleRateDay15to21 = 102;
+    uint256 private btrCrowdsaleRateDay22to28 = 100;
 
-    // BTR Crowdsale rates
-    uint256 private btrRateDay14First2Hours = 110;
-    uint256 private btrRateDay14to20 = 106;
-    uint256 private btrRateDay21to27 = 104;
-    uint256 private btrRateDay28to34 = 102;
-    uint256 private btrRateDay35to41 = 100;
-
-    // BSK Presale Rates
+    uint256 private bskPrivateSaleRate = 70;
     uint256 private bskRateFirst2Hours = 70;
     uint256 private bskRateDay1 = 68;
     uint256 private bskRateDay2to5 = 66;
     uint256 private bskRateDay6to9 = 64;
     uint256 private bskRateDay10to13 = 62;
-
-    // BSK Crowdsale Rates
     uint256 private bskRateDay14to20 = 60;
     uint256 private bskRateDay21to27 = 57;
     uint256 private bskRateDay28to34 = 54;
@@ -57,22 +56,43 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
      */
     event BitherStockTokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    /**
+    /** UPDATE THIS DOC STRING, ADD ASSERT/REQUIRE FOR TIMES BEING IN ORDER
      * @dev Constructor, calls the inherited classes constructors and stores the BitherStockToken
      * @param bitherToken The BitherToken address, must be an ERC20 contract
      * @param bitherStockToken The BitherStockToken, must be an ERC20 contract
      * @param bitherTokensOwner Address holding the tokens, which has approved allowance to the crowdsale
      * @param etherBenefactor Address that will receive the deposited Ether
-     * @param openingTime The opening time, in seconds, the crowdsale will begin at
+     * @param preSaleOpeningTime The presale opening time, in seconds
+     * @param crowdsaleOpeningTime The crowdsale opening time, in seconds
      */
-    constructor(IERC20 bitherToken, IERC20 bitherStockToken, address bitherTokensOwner, address etherBenefactor, uint256 openingTime)
-        Crowdsale(btrRateDay1, etherBenefactor, bitherToken)
+    constructor(IERC20 bitherToken, IERC20 bitherStockToken, address bitherTokensOwner, address etherBenefactor, uint256 preSaleOpeningTime, uint256 crowdsaleOpeningTime)
+        Crowdsale(btrPresaleRateDay1, etherBenefactor, bitherToken)
         AllowanceCrowdsale(bitherTokensOwner)
-        TimedCrowdsale(openingTime, openingTime + crowdsaleLength)
+        TimedCrowdsale(now, crowdsaleOpeningTime + 4 weeks)
         CappedCrowdsale(capInWei)
         public
     {
         _bitherStockToken = bitherStockToken;
+
+        _privateSaleClosingTime = preSaleOpeningTime - 2 days;
+        _preSaleOpeningTime = preSaleOpeningTime;
+        _crowdsaleOpeningTime = crowdsaleOpeningTime;
+        _crowdsaleClosingTime = crowdsaleOpeningTime + 4 weeks;
+    }
+
+    /**
+     * @dev Overrides function in the Crowdsale contract to revert contributions less then
+     *      69 Eth during the first period and less than 1 Eth during the rest of the crowdsale
+     * @param beneficiary Address performing the token purchase
+     * @param weiAmount Value in wei involved in the purchase
+     */
+    function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal view {
+        super._preValidatePurchase(beneficiary, weiAmount);
+        if (now < openingTime() + 1 days) {
+            require(weiAmount >= 69 ether, "Not enough Eth. Contributions must be 69 Eth minimum during the private sale");
+        } else {
+            require(weiAmount >= 100 finney, "Not enough Eth. Contributions must be 0.1 Eth minimum during the presale and crowdsale");
+        }
     }
 
     /**
@@ -81,24 +101,30 @@ contract BitherCrowdsale is AllowanceCrowdsale, TimedCrowdsale, CappedCrowdsale 
      * @return Number of tokens that can be purchased with the specified weiAmount
      */
     function _getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
-        if (now < openingTime() + 1 days) {
-            return weiAmount.mul(btrRateDay1);
-        } else if (now < openingTime() + 5 days) {
-            return weiAmount.mul(btrRateDay2to5);
-        } else if (now < openingTime() + 9 days) {
-            return weiAmount.mul(btrRateDay6to9);
-        } else if (now < openingTime() + 13 days) {
-            return weiAmount.mul(btrRateDay10to13);
-        } else if (now < openingTime() + 13 days + 2 hours) {
-            return weiAmount.mul(btrRateDay14First2Hours);
-        } else if (now < openingTime() + 20 days) {
-            return weiAmount.mul(btrRateDay14to20);
-        } else if (now < openingTime() + 27 days) {
-            return weiAmount.mul(btrRateDay21to27);
-        } else if (now < openingTime() + 34 days) {
-            return weiAmount.mul(btrRateDay28to34);
+        if (now < _privateSaleClosingTime) {
+            return weiAmount.mul(btrPrivateSaleRate);
+        } else if (now < _preSaleOpeningTime) {
+            revert("Private sale has ended and the presale is yet to begin");
+        } else if (now < _preSaleOpeningTime + 1 days) {
+            return weiAmount.mul(btrPresaleRateDay1);
+        } else if (now < _preSaleOpeningTime + 5 days) {
+            return weiAmount.mul(btrPresaleRateDay2to5);
+        } else if (now < _preSaleOpeningTime + 9 days) {
+            return weiAmount.mul(btrPresaleRateDay6to9);
+        } else if (now < _preSaleOpeningTime + 13 days) {
+            return weiAmount.mul(btrPresaleRateDay10to13);
+        } else if (now < _crowdsaleOpeningTime) {
+            revert("Presale has ended and the crowdsale is yet to begin");
+        } else if (now < _crowdsaleOpeningTime + 2 hours) {
+            return weiAmount.mul(btrCrowdsaleRateDay1First2Hours);
+        } else if (now < _crowdsaleOpeningTime + 1 weeks) {
+            return weiAmount.mul(btrCrowdsaleRateDay1to7);
+        } else if (now < _crowdsaleOpeningTime + 2 weeks) {
+            return weiAmount.mul(btrCrowdsaleRateDay8to14);
+        } else if (now < _crowdsaleOpeningTime + 3 weeks) {
+            return weiAmount.mul(btrCrowdsaleRateDay15to21);
         } else if (now <= closingTime()) {
-            return weiAmount.mul(btrRateDay35to41);
+            return weiAmount.mul(btrCrowdsaleRateDay22to28);
         }
     }
 

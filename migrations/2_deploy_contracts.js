@@ -12,10 +12,10 @@ module.exports = async (deployer, network, accounts) => {
 
     let bitherToken, bitherStockToken, multiSigWallet, bitherCrowdsale
 
-    await deployBitherTokens()
-    await deployMultiSigWallet()
-    await transferTokensToMultiSig()
-    await deployBitherCrowdsale()
+    // await deployBitherTokens()
+    // await deployMultiSigWallet()
+    // await transferTokensToMultiSig()
+    // await deployBitherCrowdsale()
 
     /**
      * This should be removed/commented for final deployment.
