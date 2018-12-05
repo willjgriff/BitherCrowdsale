@@ -5,5 +5,8 @@
 		"openzeppelin-solidity": "^2.0.0",
 		"pify": "^4.0.1",
 		"truffle-hdwallet-provider": "^1.0.0-web3one.1"
+	},
+	"devDependencies": {
+		"eth-gas-reporter": "^0.1.12"
 	}
 }
