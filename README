@@ -1,3 +1,6 @@
+This was a project done in a freelance capacity for http://bitherplatform.io/. It is a fairly basic crowdsale contract using Zeppelin contracts edited to fit requirements. It has a complete set of tests.
+
+Commands/Usage
 Bither Crowdsale commands, all executed from within a terminal window.
 Keep in mind that I use a mac/osx, some commands may differ on Windows.
 
@@ -9,7 +12,8 @@ Installation:
 
     Once node is installed, install truffle v5.0.0-beta.1 from the terminal with:
         npm install -g truffle@5.0.0-beta.1
-    The latest version v5.0.0-beta.2 seems to raise issues with my tests, I think it has bugs, so use the version specified.
+    The latest version v5.0.0-beta.2 seems to raise issues with my tests, either this version or my code has bugs,
+    so use the version specified.
 
     Install ganache-cli with:
         npm install -g ganache-cli
@@ -65,7 +69,8 @@ Post deployment scripts, consider using the MultiSig UI provided by Gnosis inste
 
 
     To execute SubmitConfirmationsToMultiSig.js:
-    If whoever deploys the contracts to the network is also one of the MultiSig owner's they don't have to edit the config file for this script.
+    If whoever deploys the contracts to the network is also one of the MultiSig owner's they don't have to edit the config
+    file for this script.
     If whoever executes this script was not the deployer of the contracts, they must fill in the contract addresses in
     migrations/DeploymentConfig.js. These addresses are displayed during deployment in the terminal window with label 'contract address'.
 
@@ -82,9 +87,11 @@ Post deployment scripts, consider using the MultiSig UI provided by Gnosis inste
 
         truffle --network [ropsten/mainnet] exec scripts/DisplayAllowanceForCrowdsale.js
 
-    note '--network [ropsten/mainnet]' requires you to pick one network depending on where you've deployed the contracts, eg --network mainnet
+    note '--network [ropsten/mainnet]' requires you to pick one network depending on where you've deployed the contracts, 
+    eg --network mainnet
 
-    See the commented function 'approveAndConfirmTokensForCrowdsale()' in migrations/2_deploy_contracts for an impression of the process above.
+    See the commented function 'approveAndConfirmTokensForCrowdsale()' in migrations/2_deploy_contracts for an impression
+    of the process above.
 
 Main Net Deployment Addresses:
     BitherToken: 0x9870811ef1a1c7d6b3cd78d8d8bb553e9464d454
