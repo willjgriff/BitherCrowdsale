@@ -81,10 +81,7 @@ eg `--network mainnet`
 See the commented function `approveAndConfirmTokensForCrowdsale()` in `migrations/2_deploy_contracts` for an impression
 of the process above.
 
-### Main Net Deployment Addresses:
-BitherToken: [0x9870811ef1a1c7d6b3cd78d8d8bb553e9464d454](https://etherscan.io/address/0x9870811ef1a1c7d6b3cd78d8d8bb553e9464d454)  
-BitherStockToken: [0xcb2d8b44446614e20f1410b88d1ba1eefef47a57](https://etherscan.io/address/0xcb2d8b44446614e20f1410b88d1ba1eefef47a57)  
-MultiSigWallet: [0xb0b798db83574fda60fec1dea57f90b4f49e8df5](https://etherscan.io/address/0xb0b798db83574fda60fec1dea57f90b4f49e8df5)  
-BitherCrowdsale: [0x5c2fea6f04d037d26c1db2b92ad146accf5b088e](https://etherscan.io/address/0x5c2fea6f04d037d26c1db2b92ad146accf5b088e)  
+### Main Net Deployment Address:  
+BitherCrowdsale: [0x8227d745273c29BD3179611df37e84E6cf068BEE](https://etherscan.io/address/0x8227d745273c29BD3179611df37e84E6cf068BEE)  
 
 
